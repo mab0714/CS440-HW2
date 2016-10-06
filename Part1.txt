@@ -1,0 +1,71 @@
+Word Sodoku
+
+
+Basics:
+Variables (all '_' spots)
+Domain (words)
+Constraints: no repeating letters in row/column, words fit on the board
+
+
+Implentation:
+DFS
+
+Node has:
+State:
+	Fixed 9x9 character arrays
+	board[x][y] = '_';  --etc
+
+List of hints? 
+	<1_1_r, 2_3_x>
+
+List of unused words (sort by the longest words) (value)
+        <word1, word2>
+
+List of assigned words
+	<v, 0, 2: word3, h, 0 4: word4>
+
+Dictionary of possible values (track remaining values for early detection of failure/forward checking  or  arc consistency?)
+	<x_y> = {H_word1, V_word1, word3}
+	EX: 1_1 = {marvelous, fabulous, car}  order possibilities by longest word
+	//recalculate dictionary after every assignment to make sure variable loses an option
+
+arc consistency?: can a variable be assigned with a letter within the remaining words, with out violating constraints in other variables (letters overlap, word doesn't fit on the board)
+
+
+Goal Test (all constraints healthy (consistent) and no more '_' on the 9x9 board (complete) or list of words is empty? (not valid for decoy section))
+
+Constraint Functions:
+1 Count of unique chars in row
+2 Count of unique chars in column
+3 Count of unique chars in 3x3 cell (need method to check cells...cell1 (x (0-2), y (0-2_))...cell 2 ())  
+*4 Length constraint (word can't exceed the board) on row  // may be used in calculation of dictionary
+*5 Length constraint (word can't exceed the board) on column // may be used in calculation of dictionary
+6 hints aren't violated (if any)
+
+Extra
+Check rows/columns if it naturally contains any word in the word bank	
+
+Strategy:
+Choosing variable
+Most constraining variable (spots with the deepest horizontal/vertical positions)
+Most constrained (values with the fewest legal moves (see dictionary))
+
+least constraining value(value that rules out the fewest values in remaining variables (see dictionary, so maintain count of variables/track count as simulating action))
+
+Strategy:
+Choosing the variable:
+1. List of most constraining variables (Sum of max space to fill horizontally+vertically)
+18	17	16	15	14	13	12	11	10
+17	16	15	14	13	12	11	10	9
+16	15	14	13	12	11	10	9	8
+15	14	13	12	11	10	9	8	7
+14	13	12	11	10	9	8	7	6
+13	12	11	10	9	8	7	6	5
+12	11	10	9	8	7	6	5	4
+11	10	9	8	7	6	5	4	3
+10	9	8	7	6	5	4	3	2
+
+2. Most constrained (tie between 17, which one has least legal values left?)
+
+Choosing the value:
+Choosing the longest value will eliminate the fewest variables
