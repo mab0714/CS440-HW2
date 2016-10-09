@@ -111,7 +111,7 @@ namespace WordSudoku
         public bool Equals(Node n)
         {
 
-            for (int y = 8; y > 0; y--)
+            for (int y = 8; y >= 0; y--)
             {
                 for (int x = 0; x < 9; x++)
                 {
@@ -152,14 +152,21 @@ namespace WordSudoku
                 }
                 else
                 {
-                    newBoardData = updateBoard(newBoardData, direction, this._x, this._y - offset, word, newVariablePriority);
+                    newBoardData = updateBoard(newBoardData, direction, this._x, this._y + offset, word, newVariablePriority);
                 }
 
                 newUsedWordList.Add(option.Split('_')[1].ToUpper());
                 newWordBankList.Remove(option.Split('_')[1].ToUpper());
                 
                 tmpNode = new Node(newBoardData, newWordBankList, newUsedWordList, this._givenHints, this._x, this._y, newVariablePriority, this);
-                tmpNode.Assignment = option.Split('_')[0].ToUpper() + "," + this._x + "," + this.y + ": " + option;
+                if (direction.Equals("H"))
+                {
+                    tmpNode.Assignment = option.Split('_')[0].ToUpper() + "," + (this._x - offset) + "," + this.y + ": " + option.Split('_')[1].ToString();
+                }
+                else
+                {
+                    tmpNode.Assignment = option.Split('_')[0].ToUpper() + "," + this._x + "," + (this.y + offset) + ": " + option.Split('_')[1].ToString();
+                }
                 AddChild(tmpNode);
 
             }
@@ -291,10 +298,10 @@ namespace WordSudoku
             int charWordY = 0;
             if (direction.ToUpper().Equals("H"))
             {
-                for (int tmpX = x; tmpX < charWord.Length; tmpX++)
+                for (int tmpX = x; tmpX < charWord.Length + x; tmpX++)
                 {
                     board[tmpX, y] = charWord[charWordX];
-                    newVariablePriority.Remove(tmpX + "_" + y);
+                    //newVariablePriority.Remove(tmpX + "_" + y);
                     charWordX++;
                 }           
             }
@@ -303,7 +310,7 @@ namespace WordSudoku
                 for (int tmpY = y; tmpY > y-charWord.Length; tmpY--)
                 {
                     board[x, tmpY] = charWord[charWordY];
-                    newVariablePriority.Remove(x + "_" + tmpY);
+                    //newVariablePriority.Remove(x + "_" + tmpY);
                     charWordY++;
                 }
             }
@@ -528,7 +535,7 @@ namespace WordSudoku
                 char c = char.Parse(hint.Split('_')[2].ToString());
 
                 // if board doesn't match any hint
-                if (!board[hintX, hintY].Equals(c))
+                if (board[hintX, hintY] != c)
                 {
                     return false;
                 }
@@ -798,7 +805,7 @@ namespace WordSudoku
 
             Console.WriteLine("Word Sudoku Board:");
 
-            for (int y = 8; y > 0; y--)
+            for (int y = 8; y >= 0; y--)
             {
                 for (int x = 0; x < 9; x++)
                 {
