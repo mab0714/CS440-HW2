@@ -13,6 +13,8 @@ namespace WordSudoku
         static void Main(string[] args)
         {
             // Word Sudoku: Initial Board Data
+            //Console.SetWindowSize(Console.LargestWindowWidth, Console.LargestWindowHeight);
+
             string sudokuBoardFile = "";
             try
             { 
@@ -20,7 +22,7 @@ namespace WordSudoku
             }
             catch
             {
-                sudokuBoardFile = "I:\\Backup\\Masters\\UIUC\\2016\\Fall\\CS_440\\Homework\\2\\grid1.txt";
+                sudokuBoardFile = "I:\\Backup\\Masters\\UIUC\\2016\\Fall\\CS_440\\Homework\\2\\grid2.txt";
             }
 
             char[,] sudokuBoardData = new char[9,9];
@@ -64,7 +66,7 @@ namespace WordSudoku
             }
             catch
             {
-                sudokuWordBankFile = "I:\\Backup\\Masters\\UIUC\\2016\\Fall\\CS_440\\Homework\\2\\bank1.txt";
+                sudokuWordBankFile = "I:\\Backup\\Masters\\UIUC\\2016\\Fall\\CS_440\\Homework\\2\\bank2.txt";
             }
 
             lines = System.IO.File.ReadAllLines(sudokuWordBankFile);
@@ -97,7 +99,7 @@ namespace WordSudoku
             Console.Clear();
             
             // Start State 
-            Display(sudokuBoardData);
+            Display(sudokuBoardData, givenHints);
 
             //string algorithm = "";
             //int value = 0;
@@ -155,7 +157,7 @@ namespace WordSudoku
             Node startStateNode = new Node(sudokuBoardData, sudokuWordBankList, sudokuUsedWordList, givenHints, 0, 0, variablePriority, null);
             Node currentNode = startStateNode;
 
-            startStateNode.showNodeInfo();
+            //startStateNode.showNodeInfo();
             //startStateNode.findEligibleAssignments();
 
             //foreach (Node n in startStateNode.childNodes)
@@ -166,42 +168,93 @@ namespace WordSudoku
 
             List<Node> pathToGoalState = new List<Node>();
             List<Node> otherChildNodes = new List<Node>();
+            int pruningStrategy = 2;
+            found = findDFSBackTrackingPath(currentNode, visitedNodes, pathToGoalState, otherChildNodes, pruningStrategy);
+            //found = findDFSBackTrackingPath2(currentNode, visitedNodes, pathToGoalState, otherChildNodes, pruningStrategy);
 
-            found = findDFSBackTrackingPath(currentNode, visitedNodes, pathToGoalState, otherChildNodes);
-            
             // Log end of search
             DateTime end = DateTime.Now;
-
+            List<string> orderOfAssignment = new List<string>();
             if (found)
             {
-
+                Console.Clear();
                 Console.WriteLine("****************");
+                Console.WriteLine("SOLUTION FOUND!");
                 Console.WriteLine("Summary: ");
-                Console.WriteLine("Search Started: " + start);
-                Console.WriteLine("Search Ended: " + end);
-                Console.WriteLine("Duration: " + (end - start));
-                Console.WriteLine("Nodes visited: " + visitedNodes.Count());
+                Console.WriteLine(" Board: " + sudokuBoardFile);
+                Console.WriteLine(" WordBank: " + sudokuWordBankFile);
+                Console.Write(" Pruning Strategy: ");
+                if (pruningStrategy == 0)
+                {
+                    Console.WriteLine("Brute Force");
+                }
+                else if (pruningStrategy == 1)
+                {
+                    Console.WriteLine("Forward Checking");
+                }
+                else if (pruningStrategy == 2)
+                {
+                    Console.WriteLine("Arc Consistency");
+                }
+
+                Console.WriteLine(" Search Started: " + start);
+                Console.WriteLine(" Search Ended: " + end);
+                Console.WriteLine(" Duration: " + (end - start));
+                Console.WriteLine(" Nodes visited: " + visitedNodes.Count());
+                // Display the finalPath backwards
+                pathToGoalState.Reverse();
+                foreach (Node n in pathToGoalState)
+                {
+                    n.showNodeInfo();
+                    orderOfAssignment.Add(n.Assignment);
+                }
+                Console.WriteLine("Assignment: ");
+                foreach (string assignment in orderOfAssignment)
+                {
+                    Console.WriteLine(assignment);
+                }
                 Console.WriteLine("****************");
 
             }
             else
             {
+                Console.Clear();
                 Console.WriteLine("****************");
+                Console.WriteLine("NO SOLUTION FOUND!");
                 Console.WriteLine("Summary: ");
-                Console.WriteLine("Search Started: " + start);
-                Console.WriteLine("Search Ended: " + end);
-                Console.WriteLine("Duration: " + (end - start));
-                Console.WriteLine("Nodes visited: " + visitedNodes.Count());
+                Console.WriteLine(" Board: " + sudokuBoardFile);
+                Console.WriteLine(" WordBank: " + sudokuWordBankFile);
+                Console.Write(" Pruning Strategy: ");
+                if (pruningStrategy == 0)
+                {
+                    Console.WriteLine("Brute Force");
+                }
+                else if (pruningStrategy == 1)
+                {
+                    Console.WriteLine("Forward Checking");
+                }
+                else if (pruningStrategy == 2)
+                {
+                    Console.WriteLine("Arc Consistency");
+                }                
+
+                Console.WriteLine(" Search Started: " + start);
+                Console.WriteLine(" Search Ended: " + end);
+                Console.WriteLine(" Duration: " + (end - start));
+                Console.WriteLine(" Nodes visited: " + visitedNodes.Count());
                 Console.WriteLine("****************");
             }
 
-            Console.WriteLine("Press anykey to quit");
-            Console.ReadKey();
+        do
+            {
+                Console.WriteLine("Press q to quit");
+            } while (Console.ReadKey().KeyChar != 'q');
 
         }
 
-        static bool findDFSBackTrackingPath(Node currentNode,  List<Node> visitedNodes, List<Node> finalPathOfNodes, List<Node> otherChildNodes)
-        {                        
+
+        static bool findDFSBackTrackingPath2(Node currentNode, List<Node> visitedNodes, List<Node> finalPathOfNodes, List<Node> otherChildNodes, int pruning)
+        {
             // In case of backtracking, no need to add a revisited node 
             // Perhaps a wall was hit, and backtracking is necessary.  No need to add the
             // revisited node again.
@@ -211,7 +264,7 @@ namespace WordSudoku
             }
 
             Console.Clear();
-            Display(currentNode.SudokuBoardData);
+            Display(currentNode.SudokuBoardData, currentNode.GivenHints);
 
             Node nextNode = new Node(currentNode.SudokuBoardData, currentNode.SudokuWordBankList, currentNode.SudokuUsedWordList, currentNode.GivenHints, currentNode.x, currentNode.y, currentNode.CurrentVariablePriority, currentNode);
 
@@ -229,735 +282,464 @@ namespace WordSudoku
                 }
 
                 Console.Clear();
-                Display(currentNode.SudokuBoardData);
+                Display(currentNode.SudokuBoardData, currentNode.GivenHints);
 
                 return true;
             }
             else
-            {                
-                currentNode.showNodeInfo();
+            {
 
                 // Make assignment
                 try
                 {
-                    // Choose most constraining variable
-                    var keysWithMatchingValues = currentNode.CurrentVariablePriority.Where(p => p.Value == currentNode.CurrentVariablePriority.Values.Max()).Select(p => p.Key);
 
-                    int VariableX = Int32.Parse(keysWithMatchingValues.ToList()[0].Split('_')[0]);
-                    int VariableY = Int32.Parse(keysWithMatchingValues.ToList()[0].Split('_')[1]);
+                    // try to choose the best variable
+                    // Minimum remaining values dictate which is the most constrained variables.                    
+                    currentNode.PossibleValuesDict = Node.calcPossibleSpots(currentNode.SudokuBoardData, currentNode.SudokuWordBankList, currentNode.SudokuUsedWordList, currentNode.GivenHints);
 
-                    currentNode.x = VariableX;
-                    currentNode.y = VariableY;
+                    // Choose word with least amount of available spots (most constrained), if there is a tie, choose the longest word as the more constraining variable
+                    //int? minValues = null;
+                    string mostConstrainedVariable = "";
+                    Node mostConstrainedVariableNode = null;
+                    Dictionary<string, int> dictOfMostConstrainingVariableNodes = new Dictionary<string, int>();
+                    Dictionary<string, int> dictGroupOfMostConstrainingVariableNodes = new Dictionary<string, int>();
 
-                    string chosenDirection = "";
-                    string chosenWord = "";
-                    int offset = 0;
-                    // try to choose the best value
-                    bool isAssignmentSafe = false;
-                    while (!isAssignmentSafe)
+                    int cnt = 0;
+                    foreach (KeyValuePair<string, List<String>> variable in currentNode.PossibleValuesDict)
                     {
-                        // try the first one (this is ordered by file length)
-                        currentNode.PossibleValuesDict = Node.calcPossibleValues(currentNode.SudokuBoardData, currentNode.SudokuWordBankList, currentNode.SudokuUsedWordList, currentNode.GivenHints);
-                        chosenDirection = currentNode.PossibleValuesDict[currentNode.x + "_" + currentNode.y][0].Split('_')[0].ToString().ToUpper();
-                        chosenWord = currentNode.PossibleValuesDict[currentNode.x + "_" + currentNode.y][0].Split('_')[1].ToString().ToUpper();
-                        offset = Int32.Parse(currentNode.PossibleValuesDict[currentNode.x + "_" + currentNode.y][0].Split('_')[2].ToString());
-
-                        // Does this assignment cause inconsistency?
-                        // Check if any value in the dictionary has no choices
-                        // Linq Min
-                        List<string> newArcWordList = new List<string>(currentNode.SudokuWordBankList);                        
-                        List<string> newArcUsedWordList = new List<string>(currentNode.SudokuUsedWordList);
-
-                        char[,] newArcBoard = new char[9,9];
-                        for (int j=0; j<9; j++)
-                        {
-                            for (int k = 0; k < 9; k++)
-                            {
-                                newArcBoard[j, k] = currentNode.SudokuBoardData[j, k];
-                            }
-                        }
-
-                        Node ArcCheckNode = new Node(newArcBoard, newArcWordList.ToList<string>(), newArcUsedWordList.ToList<string>(), currentNode.GivenHints, currentNode.x, currentNode.y, currentNode.CurrentVariablePriority, currentNode.parentNode);
-
-                        currentNode.showNodeInfo();
-                        ArcCheckNode.showNodeInfo();
-
-                        if (chosenDirection.Equals("H"))
-                        {
-                            ArcCheckNode.SudokuBoardData = ArcCheckNode.updateBoard(ArcCheckNode.SudokuBoardData, chosenDirection, ArcCheckNode.x - offset, ArcCheckNode.y, chosenWord, ArcCheckNode.CurrentVariablePriority);
-                        }
-                        else
-                        {
-                            ArcCheckNode.SudokuBoardData = ArcCheckNode.updateBoard(ArcCheckNode.SudokuBoardData, chosenDirection, ArcCheckNode.x, ArcCheckNode.y - offset, chosenWord, ArcCheckNode.CurrentVariablePriority);
-                        }
-
-                        ArcCheckNode.SudokuUsedWordList.Add(chosenWord);
-                        ArcCheckNode.SudokuWordBankList.Remove(chosenWord);                        
-                        ArcCheckNode.PossibleValuesDict = Node.calcPossibleValues(ArcCheckNode.SudokuBoardData, ArcCheckNode.SudokuWordBankList, ArcCheckNode.SudokuUsedWordList, ArcCheckNode.GivenHints);
-                        isAssignmentSafe = true;
-                        // Loop all variables and check if locations left with '_' have options
-                        for (int y = 8; y > 0; y--)
-                        {               
-                            for (int x = 0; x < 9; x++)
-                            {
-                                if (ArcCheckNode.SudokuBoardData[x, y] == '_')
-                                {
-                                    if (ArcCheckNode.PossibleValuesDict[x + "_" + y].Count == 0)
-                                    {
-                                        isAssignmentSafe = false;
-                                        currentNode.PossibleValuesDict[currentNode.x + "_" + currentNode.y].Remove(currentNode.PossibleValuesDict[currentNode.x + "_" + currentNode.y][0].Split('_')[0]);
-                                        break;
-                                    }
-                                };
-                            }                                                               
-                        }
-                        
+                        dictOfMostConstrainingVariableNodes.Add(variable.Key, variable.Value.Count);
                     }
-                    // Assignment is safe
 
-                    if (chosenDirection.Equals("H"))
-                    {
-                        currentNode.SudokuBoardData = currentNode.updateBoard(currentNode.SudokuBoardData, chosenDirection, currentNode.x - offset, currentNode.y, chosenWord, currentNode.CurrentVariablePriority);
-                        currentNode.Assignment = chosenWord;
-                        currentNode.SudokuUsedWordList.Add(chosenWord);
-                        currentNode.SudokuWordBankList.Remove(chosenWord);
-                    }
-                    else
-                    {
-                        currentNode.SudokuBoardData = currentNode.updateBoard(currentNode.SudokuBoardData, chosenDirection, currentNode.x, currentNode.y - offset, chosenWord, currentNode.CurrentVariablePriority);
-                        currentNode.Assignment = chosenWord;
-                        currentNode.SudokuUsedWordList.Add(chosenWord);
-                        currentNode.SudokuWordBankList.Remove(chosenWord);
-                    }
-                }
-                catch
-                {
-                    // maybe there is no more possible words
-                    return false;
+                    // Loop through values with the lowest remaining values
+                    int min = dictOfMostConstrainingVariableNodes.Min(entry => entry.Value);
+                    Dictionary<string, int> listOfMostConstrainedVariableNodes = new Dictionary<string, int>();
+                    Dictionary<string, int> listOfValues = new Dictionary<string, int>();
 
-                }
-
-                if (currentNode.childNodes == null)
-                {
-                    currentNode.childNodes = currentNode.findEligibleAssignments();
-                }
+                    var keysWithSameMRV = dictOfMostConstrainingVariableNodes.Where(i => i.Value.Equals(min));
 
 
-                if (currentNode.childNodes != null && currentNode.childNodes.Count > 0)
-                {
 
-                    //// Mark childNodes as being already a child to some other parent.
-                    //foreach (Node n in currentNode.childNodes)
+                    //// TODO    
+                    //// Somehow sort by key length, to  choose more constraining variable as tiebreaker?
+                    //List<string> sortedVariables = new List<string>();
+                    //foreach (KeyValuePair<string, int> kvp in keysWithSameMRV)
                     //{
-                    //    if (!otherChildNodes.Contains(n))
-                    //    {
-                    //        otherChildNodes.AddRange(currentNode.childNodes);
-                    //    }
+                    //    sortedVariables.Add(kvp.Key);
                     //}
 
-                    //// Remove visited childNodes as repeatable options.
-                    //foreach (Node n in visitedNodes)
+                    //sortedVariables = sortedVariables.OrderByDescending(s => s.Length).ToList();
+
+                    //// Call ARC Routine
+                    ////AC3(currentNode.SudokuWordBankList, currentNode.PossibleValuesDict, currentNode.SudokuBoardData, currentNode.SudokuUsedWordList, currentNode.GivenHints);
+
+                    ////Choose the best value
+                    //// Loop through values that are least constraining
+                    //List<string> listOfTempValues = new List<string>();
+                    //int cntConstraints = 0;
+                    //for (int p = 0; p < currentNode.PossibleValuesDict[sortedVariables[0]].Count; p++ )
+                    ////foreach (string position in currentNode.PossibleValuesDict[sortedVariables[0]])
                     //{
-                    //    if (currentNode.childNodes.Contains(n))
+
+                    //    //if (reducedDomain.Contains(position))
+                    //    //{
+                    //        // Looping through reduced domains
+                    //        foreach(string remainingWord in currentNode.SudokuWordBankList)
+                    //        {
+                    //            if (!remainingWord.Equals(sortedVariables[0]))
+                    //            {
+                    //                // Checking impact of the remaining values
+                    //                char[,] tempBoard = (char[,])currentNode.SudokuBoardData.Clone();
+                    //            // Update board
+                    //            //string direction = position.Split('_')[0].ToString().ToUpper();
+                    //            //int x = Int32.Parse(position.Split('_')[1]);
+                    //            //int y = Int32.Parse(position.Split('_')[2]);
+                    //            string direction = currentNode.PossibleValuesDict[sortedVariables[0]][p].Split('_')[0].ToString().ToUpper();
+                    //            int x = Int32.Parse(currentNode.PossibleValuesDict[sortedVariables[0]][p].Split('_')[1]);
+                    //            int y = Int32.Parse(currentNode.PossibleValuesDict[sortedVariables[0]][p].Split('_')[2]);
+
+                    //            tempBoard = Node.updateBoardAC3(tempBoard, direction, x, y, sortedVariables[0]);
+
+                    //            try
+                    //            {
+                    //                listOfTempValues = Node.calcPossibleSpots(tempBoard, currentNode.SudokuWordBankList, currentNode.SudokuUsedWordList, currentNode.GivenHints)[remainingWord];
+                    //                // {H_1_3, etc}
+                    //                // Add the counts per word per position
+                    //                // 
+                    //                if (listOfValues.ContainsKey(currentNode.PossibleValuesDict[sortedVariables[0]][p]))
+                    //                {
+                    //                    cntConstraints = listOfValues[currentNode.PossibleValuesDict[sortedVariables[0]][p]] + listOfTempValues.Count;
+                    //                    listOfValues.Remove(currentNode.PossibleValuesDict[sortedVariables[0]][p]);
+                    //                    listOfValues.Add(currentNode.PossibleValuesDict[sortedVariables[0]][p], cntConstraints);
+                    //                }
+                    //                else
+                    //                {
+                    //                    listOfValues.Add(currentNode.PossibleValuesDict[sortedVariables[0]][p], listOfTempValues.Count);
+                    //                }
+                    //            }
+                    //            catch (Exception ex)
+                    //            {
+                    //                ;
+                    //                currentNode.PossibleValuesDict[sortedVariables[0]].Remove(currentNode.PossibleValuesDict[sortedVariables[0]][p]);
+                    //                p = -1;
+                    //                break;
+                    //            }
+
+
+
+                    //            }
+                    //        }
+
+                    //    //}
+                    //}
+
+                    ////// Loop through positions with the most remaining values
+                    //int max = 0;
+                    //try
+                    //{
+                    //    max = listOfValues.Max(entry => entry.Value);
+                    //}
+                    //catch
+                    //{
+                    //    return false;
+                    //}
+
+                    //var keys = new List<string>(listOfValues.Keys);
+                    ////foreach (string key in keys.ToList())
+                    //for (int k = 0; k < keys.Count; k++)
+                    //{
+                    //    if (listOfValues[keys[k]] == max)
                     //    {
-                    //        currentNode.childNodes.Remove(n);
+                    //        nextNode.Word = sortedVariables[0];
+                    //        nextNode.SudokuUsedWordList.Add(sortedVariables[0]);
+                    //        nextNode.SudokuWordBankList.Remove(sortedVariables[0]);
+                    //        nextNode.x = Int32.Parse(keys[k].Split('_')[1]);
+                    //        nextNode.y = Int32.Parse(keys[k].Split('_')[2]);
+                    //        nextNode.Assignment = keys[k] + ": " + nextNode.Word;
+                    //        nextNode.SudokuBoardData = nextNode.updateBoard(nextNode.SudokuBoardData, keys[k].Split('_')[0], nextNode.x, nextNode.y, nextNode.Word, nextNode.CurrentVariablePriority);
+                    //        if (findDFSBackTrackingPath2(nextNode, visitedNodes, finalPathOfNodes, otherChildNodes, pruning))
+                    //        {
+                    //            return true;
+                    //        }
+                    //        else
+                    //        {
+
+                    //            listOfValues.Remove(keys[k]);
+                    //            keys = new List<string>(listOfValues.Keys);
+                    //            if (keys.Count < 0)
+                    //            {
+                    //                max = listOfValues.Max(entry => entry.Value);
+                    //            }
+                    //            k = -1;
+                    //        }
                     //    }
                     //}
-                    // Any unvisited children should be visited next
+                    ////foreach (KeyValuePair<string, int> kvpValues in listOfValues.Where(i => i.Value.Equals(max)))
+                    ////{
+                    ////    nextNode.Word = sortedVariables[0];
+                    ////    nextNode.SudokuUsedWordList.Add(sortedVariables[0]);
+                    ////    nextNode.SudokuWordBankList.Remove(sortedVariables[0]);
+                    ////    nextNode.x = Int32.Parse(kvpValues.Key.Split('_')[1]);
+                    ////    nextNode.y = Int32.Parse(kvpValues.Key.Split('_')[2]);
+                    ////    nextNode.Assignment = kvpValues.Key + ": " + nextNode.Word;
+                    ////    nextNode.SudokuBoardData = nextNode.updateBoard(nextNode.SudokuBoardData, kvpValues.Key.Split('_')[0], nextNode.x, nextNode.y, nextNode.Word, nextNode.CurrentVariablePriority);
+                    ////    if (findDFSBackTrackingPath2(nextNode, visitedNodes, finalPathOfNodes, otherChildNodes, pruning))
+                    ////    {
+                    ////        return true;
+                    ////    }
+                    ////    else
+                    ////    {
+                    ////        listOfValues.Remove(kvpValues.Key);
+                    ////    }
 
-                    // Choose currentNode variable (if it's best)
-                    int mostConstrainingValue = 0;
-                    var keysWithMatchingValues = currentNode.CurrentVariablePriority.Where(p => p.Value == currentNode.CurrentVariablePriority.Values.Max()).Select(p => p.Key);
-                    Node tmpNode = new Node(currentNode.SudokuBoardData, currentNode.SudokuWordBankList, currentNode.SudokuUsedWordList, currentNode.GivenHints, currentNode.x, currentNode.y, currentNode.CurrentVariablePriority, currentNode);
+                    ////}
 
-                    if (currentNode.childNodes.Count > 0)
+                    //return false;
+
+
+                    foreach (KeyValuePair<string, int> kvp in keysWithSameMRV)
                     {
-                        // Choose the nextNode
-                        // choose most constraining variable 
-                        foreach(Node child in currentNode.childNodes)
+                        // Loop through values that are least constraining
+                        foreach (string position in currentNode.PossibleValuesDict[kvp.Key])
                         {
-                            child.findEligibleAssignments();
-                            if (child.CurrentVariablePriority.Values.Max() > mostConstrainingValue)
+                            // Simulate Choosing one
+                            List<string> newArcWordList = new List<string>(currentNode.SudokuWordBankList);
+                            List<string> newArcUsedWordList = new List<string>(currentNode.SudokuUsedWordList);
+
+                            char[,] newArcBoard = new char[9, 9];
+                            for (int j = 0; j < 9; j++)
                             {
-                                mostConstrainingValue = child.CurrentVariablePriority.Values.Max();
-                                keysWithMatchingValues = child.CurrentVariablePriority.Where(p => p.Value == mostConstrainingValue).Select(p => p.Key);                                
-                                tmpNode = child;
-                            }
-                            else if (child.CurrentVariablePriority.Values.Max() == mostConstrainingValue)
-                            {
-                                // Tie breaker, which has the fewest legal moves
-                                // childNodes indicate the legal moves
-                                int result = 0;
-                                try
+                                for (int k = 0; k < 9; k++)
                                 {
-                                    Int32.TryParse(child.childNodes.Count().ToString(), out result);
-                                    if (result < tmpNode.childNodes.Count)
-                                    {
-                                        mostConstrainingValue = child.CurrentVariablePriority.Values.Max();
-                                        keysWithMatchingValues = child.CurrentVariablePriority.Where(p => p.Value == mostConstrainingValue).Select(p => p.Key);
-                                        tmpNode = child;
-                                    }
+                                    newArcBoard[j, k] = currentNode.SudokuBoardData[j, k];
                                 }
-                                catch
-                                {
-                                    // no more legal moves
-                                    // don't choose this value
-                                    ;
-                                }                                
-                            }                            
-                        }
-                        
-                        int nextVariableX = Int32.Parse(keysWithMatchingValues.ToList()[0].Split('_')[0]);
-                        int nextVariableY = Int32.Parse(keysWithMatchingValues.ToList()[0].Split('_')[1]);
-                        tmpNode.x = nextVariableX;
-                        tmpNode.y = nextVariableY;
+                            }
 
-                        nextNode = tmpNode;
-                        if (findDFSBackTrackingPath(nextNode, visitedNodes, finalPathOfNodes, otherChildNodes))
-                        {
-                            return true;
+                            Node ArcCheckNode = new Node(newArcBoard, newArcWordList.ToList<string>(), newArcUsedWordList.ToList<string>(), currentNode.GivenHints, currentNode.x, currentNode.y, currentNode.CurrentVariablePriority, currentNode.parentNode);
+                            ArcCheckNode.x = Int32.Parse(position.Split('_')[0]);
+                            ArcCheckNode.y = Int32.Parse(position.Split('_')[1]);
+                            ArcCheckNode.Word = kvp.Key;
+                            ArcCheckNode.SudokuBoardData = ArcCheckNode.updateBoard(ArcCheckNode.SudokuBoardData, kvp.Key.Split('_')[0], ArcCheckNode.x, ArcCheckNode.y, ArcCheckNode.Word.Split('_')[1], ArcCheckNode.CurrentVariablePriority);
+                            ArcCheckNode.SudokuWordBankList.Remove(ArcCheckNode.Word);
+                            ArcCheckNode.SudokuUsedWordList.Add(ArcCheckNode.Word);
+                            ArcCheckNode.PossibleValuesDict = Node.calcPossibleSpots(ArcCheckNode.SudokuBoardData, ArcCheckNode.SudokuWordBankList, ArcCheckNode.SudokuUsedWordList, ArcCheckNode.GivenHints);
+
+                            bool isAssignmentSafe = true;
+                            int cntConstraintImpact = 0;
+                            // Count impact on remaining words, if any are left 0, inconsistent.
+                            foreach (KeyValuePair<string, List<string>> ArchKvp in ArcCheckNode.PossibleValuesDict)
+                            {
+                                if (ArchKvp.Value.Count == 0)
+                                {
+                                    currentNode.PossibleValuesDict.Remove(position);
+                                    isAssignmentSafe = false;
+                                }
+                                else
+                                {
+                                    cntConstraintImpact = cntConstraintImpact + ArchKvp.Value.Count;
+                                }
+                            }
+                            if (!isAssignmentSafe)
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                listOfValues.Add(position, cntConstraintImpact);
+                            }
+
                         }
-                    }
-                    else
-                    {
-                        // If all childNodes are visited, then go back to parentNode.
-                        // If parentNode is null, perhaps there is no goalState
-                        if (currentNode.parentNode != null)
+
+                        // Loop through positions with the most remaining values
+                        int min2 = listOfValues.Min(entry => entry.Value);
+                        foreach (KeyValuePair<string, int> kvpValues in listOfValues.Where(i => i.Value.Equals(min2)))
                         {
-                            nextNode = currentNode.parentNode;
-                            if (findDFSBackTrackingPath(nextNode, visitedNodes, finalPathOfNodes, otherChildNodes))
+                            nextNode.Word = kvp.Key.Split('_')[1];
+                            nextNode.SudokuUsedWordList.Add(nextNode.Word);
+                            nextNode.SudokuWordBankList.Remove(nextNode.Word);
+                            nextNode.x = Int32.Parse(kvpValues.Key.Split('_')[0]);
+                            nextNode.y = Int32.Parse(kvpValues.Key.Split('_')[1]);
+                            nextNode.Assignment = kvp.Key.Split('_')[0]+ "," + kvpValues.Key.Replace('_',',') + ": " + nextNode.Word;
+                            nextNode.SudokuBoardData = nextNode.updateBoard(nextNode.SudokuBoardData, kvp.Key.Split('_')[0], nextNode.x, nextNode.y, nextNode.Word, nextNode.CurrentVariablePriority);
+                            if (findDFSBackTrackingPath(nextNode, visitedNodes, finalPathOfNodes, otherChildNodes, pruning))
                             {
                                 return true;
                             }
+                            else
+                            {
+                                ;
+                            }
+
                         }
-                        else
-                        {
-                            return false;
-                        }
+
+                        //    //min = dictOfMostConstrainingVariableNodes.Min(entry => entry.Value);
+
+                        //    // 
+                        //}
+
+
+                        //foreach (KeyValuePair<string, int> kvp in dictOfMostConstrainingVariableNodes)
+                        //{
+                        //    string word = kvp.Key.Split('_')[1];
+
+                        //    try
+                        //    {
+                        //        cnt = dictGroupOfMostConstrainingVariableNodes[word];
+                        //        dictGroupOfMostConstrainingVariableNodes.Remove(word);
+                        //        dictGroupOfMostConstrainingVariableNodes.Add(word, cnt + kvp.Value);
+
+                        //    }
+                        //    catch
+                        //    {
+
+                        //        dictGroupOfMostConstrainingVariableNodes.Add(word, kvp.Value);
+                        //    }
+                        //}
+
+
+
+
+
+
+
+
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    if (currentNode.parentNode != null)
-                    {
-                        nextNode = currentNode.parentNode;
-                        if (findDFSBackTrackingPath(nextNode, visitedNodes, finalPathOfNodes, otherChildNodes))
-                        {
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    ;
                 }
-
             }
-
             return false;
 
         }
 
 
-        //static bool findDFSPath(Node currentNode, Node goalStateNode, char[,] sudokuBoardData, List<Node> visitedNodes, List<Node> finalPathOfNodes, Random rand, List<Node> otherChildNodes, int refreshDelayMS)
-        //{
-        //    // In case of backtracking, no need to add a revisited node 
-        //    // Perhaps a wall was hit, and backtracking is necessary.  No need to add the
-        //    // revisited node again.
-        //    if (!visitedNodes.Contains(currentNode))
-        //    {
-        //        visitedNodes.Add(currentNode);
-        //    }
-
-        //    Thread.Sleep(refreshDelayMS);
-        //    Console.Clear();
-        //    Display(sudokuBoardData);
-
-        //    Node nextNode = new Node(0, 0, null);
-        //    if (currentNode.Equals(goalStateNode))
-        //    {
-        //        finalPathOfNodes.Clear();
-        //        finalPathOfNodes.Add(currentNode);
-
-        //        while (currentNode.parentNode != null)
-        //        {
-
-        //            nextNode = currentNode.parentNode;
-        //            finalPathOfNodes.Add(nextNode);
-        //            currentNode = nextNode;
-        //        }
-
-
-        //        Thread.Sleep(refreshDelayMS);
-        //        Console.Clear();
-        //        Display(sudokuBoardData);
-
-        //        return true;
-        //    }
-        //    else
-        //    {
-        //        if (currentNode.childNodes == null)
-        //        {
-        //            currentNode.childNodes = currentNode.findEligibleChildren(sudokuBoardData, otherChildNodes);
-        //        }
-
-        //        currentNode.showNodeInfo();
-
-        //        int randNumber = 0;
-        //        if (currentNode.childNodes != null && currentNode.childNodes.Count > 0)
-        //        {
-
-        //            // Mark childNodes as being already a child to some other parent.
-        //            foreach (Node n in currentNode.childNodes)
-        //            {
-        //                if (!otherChildNodes.Contains(n))
-        //                {
-        //                    otherChildNodes.AddRange(currentNode.childNodes);
-        //                }
-        //            }
-
-        //            // Remove visited childNodes as repeatable options.
-        //            foreach (Node n in visitedNodes)
-        //            {
-        //                if (currentNode.childNodes.Contains(n))
-        //                {
-        //                    currentNode.childNodes.Remove(n);
-        //                }
-        //            }
-        //            // Any unvisited children should be visited next
-        //            if (currentNode.childNodes.Count > 0)
-        //            {
-        //                randNumber = rand.Next(0, currentNode.childNodes.Count - 1);
-
-        //                nextNode = currentNode.childNodes[randNumber];
-        //                if (findDFSPath(nextNode, goalStateNode, sudokuBoardData, visitedNodes, finalPathOfNodes, rand, otherChildNodes, refreshDelayMS))
-        //                {
-        //                    return true;
-        //                }
-        //            }
-        //            else
-        //            {
-        //                // If all childNodes are visited, then go back to parentNode.
-        //                // If parentNode is null, perhaps there is no goalState
-        //                if (currentNode.parentNode != null)
-        //                {
-        //                    nextNode = currentNode.parentNode;
-        //                    if (findDFSPath(nextNode, goalStateNode, sudokuBoardData, visitedNodes, finalPathOfNodes, rand, otherChildNodes, refreshDelayMS))
-        //                    {
-        //                        return true;
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    return false;
-        //                }
-        //            }
-
-        //            //foreach (Node n in childNodes)
-        //            //{
-        //            //}
-        //            //   n.showNodeInfo();
-        //        }
-        //        else
-        //        {
-        //            if (currentNode.parentNode != null)
-        //            {
-        //                nextNode = currentNode.parentNode;
-        //                if (findDFSPath(nextNode, goalStateNode, sudokuBoardData, visitedNodes, finalPathOfNodes, rand, otherChildNodes, refreshDelayMS))
-        //                {
-        //                    return true;
-        //                }
-        //            }
-        //            else
-        //            {
-        //                return false;
-        //            }
-        //        }
-
-        //    }
-
-        //    return false;
-
-        //}
-
-        //static Dictionary<string, List<string>> calcPossibleValues (char[,] tmpboard, List<string> wordList, List<string> usedWordList, List<string> givenHints)
-        //{
-        //    char[,] board = (char[,])tmpboard.Clone();
-        //    Dictionary<string, List<string>> newDict = new Dictionary<string, List<string>>();
-        //    // Loop through the board to get the variables
-        //    for (int y = 8; y >= 0; y--)
-        //    {
-        //        for (int x = 0; x < 9; x++)
-        //        {
-        //            //if (board[x, y].Equals('_'))
-        //            //{
-        //                List<string> tmpList = getPossibleWords(board, x, y, wordList, usedWordList, givenHints);
-        //                newDict.Add(x + "_" + y, tmpList);
-        //            //}
-        //        }
-        //        Console.WriteLine();
-        //    }
-
-        //    return newDict;
-        //}
-
-        //static List<string> getPossibleWords(char[,] tmpboard, int x, int y, List<string> wordList, List<string> usedWordList, List<string> givenHints)
-        //{
-        //    char[,] board = (char[,])tmpboard.Clone();
-        //    List<string> tmpList = new List<string>();
-        //    int tmpX = x;
-        //    // bool constraints that must be satisfied
-        //    bool uniqueInRow = false;
-        //    bool uniqueInCol = false;
-        //    bool uniqueInCell = false; //3x3 cell
-        //    bool satisfyRowLength = false;
-        //    bool satisfyColLength = false;
-        //    bool safeHints = false;
-
-        //    foreach (string line in wordList)
-        //    {
-        //        satisfyRowLength = isSatisfyRowLength(x, line);
-        //        satisfyColLength = isSatisfyColLength(y, line);
-        //        // if it is NOT used yet
-        //        if (!usedWordList.Contains(line))
-        //        {
-        //            // word too long for remaining x positions
-        //            if (satisfyRowLength)
-        //            {
-        //                // Qualifies horizontally
-        //                uniqueInCol = isUniqueInCol(board, x, y, line);
-        //                uniqueInCell = isUniqueInCell(board, x, y, line, 'h');
-        //                safeHints = isViolateHints(board, x, y, line, givenHints, 'h');
-
-        //                if (uniqueInCol && uniqueInCell && safeHints)
-        //                {
-        //                    tmpList.Add("H_" + line);
-        //                }
-        //            }
-
-
-
-
-        //            // word too long for remaining y positions
-        //            if (satisfyColLength)
-        //            {
-        //                // Qualifies vertically                        
-        //                uniqueInRow = isUniqueInRow(board, x, y, line);
-        //                uniqueInCell = isUniqueInCell(board, x, y, line, 'v');
-        //                safeHints = isViolateHints(board, x, y, line, givenHints, 'v');
-        //                if (uniqueInRow && uniqueInCell && safeHints)
-        //                {
-        //                    tmpList.Add("V_" + line);
-        //                }
-        //            }
-
-
-
-
-        //        }
-        //    }
-
-
-        //    return tmpList;
-        //}
-
-        //static bool isViolateHints (char[,] tmpboard, int x, int y, string word, List<string>givenHints, char direction)
-        //{
-        //    char[,] board = (char[,])tmpboard.Clone();
-
-        //    // populate board
-        //    if (direction.ToString().ToUpper().Equals("H"))
-        //    {
-        //        // update board
-        //        for (int tmpX = x; tmpX < x+word.Length; tmpX++)
-        //        {
-        //            board[tmpX, y] = word[tmpX - x];
-        //        }
-
-        //    }
-        //    else
-        //    {
-        //        int revY = 0;
-        //        for (int tmpY = y; tmpY > y-word.Length; tmpY--)
-        //        {
-        //            board[x, tmpY] = word[revY];
-        //            revY++;
-        //        }
-        //    }
-
-        //    foreach (string hint in givenHints)
-        //    {
-        //        // check violations within the board
-        //        // hint is in for X_Y_<char>
-        //        int hintX = Int32.Parse(hint.Split('_')[0].ToString());
-        //        int hintY = Int32.Parse(hint.Split('_')[1].ToString());
-        //        char c = char.Parse(hint.Split('_')[2].ToString());
-
-        //        // if board doesn't match any hint
-        //        if (!board[hintX, hintY].Equals(c))
-        //        {
-        //            return false;
-        //        }
-
-        //    }
-
-        //    return true;
-        //}
-        //static bool isSatisfyRowLength (int x, string word) 
-        //{
-        //    if (word.Length <= (9-x))
-        //    {
-        //        return true;
-        //    }
-        //    else
-        //    {
-        //        return false;
-        //    }
-        //}
-
-        //static bool isSatisfyColLength(int y, string word)
-        //{
-        //    if (word.Length <= (y + 1))
-        //    {
-        //        return true;
-        //    }
-        //    else
-        //    {
-        //        return false;
-        //    }
-        //}
-
-        //static bool isUniqueInRow (char[,] tmpboard, int x, int y, string word)
-        //{
-        //    char[,] board = (char[,]) tmpboard.Clone();
-
-        //    // build a string consisting of all the letters in the row
-        //    string line = "";
-        //    // Y is in reverse due to orientation, so this reverts it back 
-        //    int revY = 0;
-        //    //EX: We are assigning the word CATS in a 9x9 table at y position 1, y doesn't matter since we check all x, 
-        //    //    we want to investigate the uniqueness in the rows marked in with X
-        //    //    [_________]
-        //    //    [X________]
-        //    //    [X________]
-        //    //    [X________]
-        //    //    [X________]
-        //    //    [_________]
-        //    //    [_________]
-        //    //    [_________]
-        //    //    [_________]
-
-        //    // start at the proper y, and continue until the we exceed the length of the word
-        //    for (int tmpY = y; tmpY > y-word.Length; tmpY--)
-        //    {
-        //        board[x, tmpY] = word[revY];
-        //        // loop through all the columnns and build a string
-        //        for (int tmpX = 0; tmpX < 9; tmpX++)
-        //        {                    
-        //            line = line + board[tmpX, tmpY];
-        //        }
-        //        revY++;
-        //        // check for uniqueness in the string by filtering out distinct values of the linue using Linq
-        //        // if the string returns to anything less than 9, then there was some duplication
-        //        // and there is a violation of distinct letters in a row
-        //        // remove '_'
-        //        string tmpLine = "";
-        //        if (line.Contains("_"))
-        //        {
-        //            tmpLine = line.Replace("_", "");
-        //        }
-
-        //        int tempLineLength = tmpLine.Length;
-        //        if (tmpLine.ToCharArray().Distinct().ToArray().Length < tempLineLength)
-        //        {
-        //            return false;
-        //        }
-        //        line = "";
-
-        //    }
-        //    // if we checked all columns without being false, we return true
-        //    return true;
-        //}
-
-        //static bool isUniqueInCol(char[,] tmpboard, int x, int y,  string word)
-        //{
-        //    char[,] board = (char[,])tmpboard.Clone();
-        //    // build a string consisting of all the letters in the column
-        //    string line = "";
-
-        //    //EX: We are assigning the word CATS in a 9x9 table at x position 1, y doesn't matter since we check all y, 
-        //    //    we want to investigate the uniqueness in the columns marked in with X
-        //    //    [_XXXX____]
-        //    //    [_________]
-        //    //    [_________]
-        //    //    [_________]
-        //    //    [_________]
-        //    //    [_________]
-        //    //    [_________]
-        //    //    [_________]
-        //    //    [_________]
-
-        //    // start at the proper x, and continue until the we exceed the length of the word or end of the board
-        //    int wordX = 0;
-        //    for (int tmpX = x; tmpX < x + word.Length - 1; tmpX++)
-        //    {
-        //        board[tmpX, y] = word[wordX];
-        //        wordX++;
-        //        // loop through all the columnns and build a string
-        //        for (int tmpY = 8; tmpY >= 0; tmpY--)
-        //        {                    
-        //            line = line + board[tmpX, tmpY];                    
-        //        }
-        //        // check for uniqueness in the string by filtering out distinct values of the linue using Linq
-        //        // if the string returns to anything less than 9, then there was some duplication
-        //        // and there is a violation of distinct letters in a row
-        //        // remove '_'
-        //        string tmpLine = "";
-        //        if (line.Contains("_"))
-        //        {
-        //            tmpLine = line.Replace("_", "");
-        //        }
-
-        //        int tempLineLength = tmpLine.Length;
-        //        if (tmpLine.ToCharArray().Distinct().ToArray().Length < tempLineLength)
-        //        {
-        //            return false;
-        //        }
-        //        line = "";
-
-        //    }
-        //    // if we checked all columns without being false, we return true
-        //    return true;            
-        //}
-
-        //static bool isUniqueInCell(char[,] tmpboard, int x, int y, string word, char direction)
-        //{
-        //    char[,] board = (char[,])tmpboard.Clone();
-        //    // build a string consisting of all the letters in the cell
-        //    string line = "";
-        //    if (direction.ToString().ToUpper().Equals("H"))
-        //    {
-        //        // populate our board horizontally
-        //        for (int w = x; w < word.Length; w++)
-        //        {
-        //            board[w, y] = word[w];
-        //        }
-
-        //        // check all variables impacted horizontally
-        //        for (int tmpX = x; tmpX < x + word.Length; tmpX++)
-        //        {
-        //            // Consider X coodordinate range only til 9
-        //            // EX: 0 1 2 3 4 5 6 7 8 
-        //            // We investigate x = 2
-        //            // If divide by 3 (3 spots per cell), we can calculate cell 1-3, then add one, so we aren't dealing with cell 0-2, but cell 1-3 instead
-        //            int cellX = (int)Math.Floor((tmpX / 3.0)) + 1;
-
-        //            // Now, since we don't have a 0, we can multiply by 3 to get our upper bound, then subract 1
-        //            int maxX = cellX * 3 - 1;
-
-        //            // Finally, we can subtract 2 to get the lower bound
-        //            int minX = maxX - 2;
-
-        //            // Same logic as above
-        //            int cellY = (int)Math.Floor((y / 3.0)) + 1;
-        //            int maxY = cellY * 3 - 1;
-        //            int minY = maxY - 2;
-
-
-        //            // loop through all the cell and build a string
-        //            for (int tmpY = minY; tmpY <= maxY; tmpY++)
-        //            {
-        //                for (int tmpX2 = minX; tmpX2 <= maxX; tmpX2++)
-        //                {                            
-        //                    line = line + board[tmpX2, tmpY];
-        //                }
-        //            }
-
-        //            // check for uniqueness in the string by filtering out distinct values of the linue using Linq
-        //            // if the string returns to anything less than 9, then there was some duplication
-        //            // and there is a violation of distinct letters in a row               
-        //            // remove '_'
-        //            string tmpLine = "";
-        //            if (line.Contains("_"))
-        //            {                        
-        //                tmpLine = line.Replace("_", "");
-        //            }
-
-        //            int tempLineLength = tmpLine.Length;                    
-        //            if (tmpLine.ToCharArray().Distinct().ToArray().Length < tempLineLength)
-        //            {
-        //                return false;
-        //            }
-        //            line = "";
-        //        }
-        //    }
-        //    else
-        //    {
-        //        // populate our board vertically
-        //        int revY = 0;
-        //        for (int w = y; w >= y + 1 - word.Length; w--)
-        //        {
-        //            board[x, w] = word[revY];
-        //            revY++;
-        //        }
-
-        //        // check all variables impacted vertically
-        //        for (int tmpY = y; tmpY > y + 1 - word.Length; tmpY--)
-        //        {
-        //            // Consider X coodordinate range only til 9
-        //            // EX: 0 1 2 3 4 5 6 7 8 
-        //            // We investigate x = 2
-        //            // If divide by 3 (3 spots per cell), we can calculate cell 1-3, then add one, so we aren't dealing with cell 0-2, but cell 1-3 instead
-        //            int cellY = (int)Math.Floor((tmpY / 3.0)) + 1;
-
-        //            // Now, since we don't have a 0, we can multiply by 3 to get our upper bound, then subract 1
-        //            int maxY = cellY * 3 - 1;
-
-        //            // Finally, we can subtract 2 to get the lower bound
-        //            int minY = maxY - 2;
-
-        //            // Same logic as above
-        //            int cellX = (int)Math.Floor((x / 3.0)) + 1;
-        //            int maxX = cellX * 3 - 1;
-        //            int minX = maxX - 2;
-
-
-        //            // loop through all the cell and build a string
-        //            for (int tmpY2 = minY; tmpY2 <= maxY; tmpY2++)
-        //            {
-        //                for (int tmpX = minX; tmpX <= maxX; tmpX++)
-        //                {
-        //                    line = line + board[tmpX, tmpY2];
-        //                }
-        //            }
-
-        //            // check for uniqueness in the string by filtering out distinct values of the linue using Linq
-        //            // if the string returns to anything less than 9, then there was some duplication
-        //            // and there is a violation of distinct letters in a row               
-        //            // remove '_'
-        //            string tmpLine = "";
-        //            if (line.Contains("_"))
-        //            {
-        //                tmpLine = line.Replace("_", "");
-        //            }
-
-        //            int tempLineLength = tmpLine.Length;
-        //            if (tmpLine.ToCharArray().Distinct().ToArray().Length < tempLineLength)
-        //            {
-        //                return false;
-        //            }
-        //            line = "";
-        //        }
-        //    }
-
-        //    return true;
-        //}        
+        static bool findDFSBackTrackingPath(Node currentNode,  List<Node> visitedNodes, List<Node> finalPathOfNodes, List<Node> otherChildNodes, int pruning)
+        {                        
+            // In case of backtracking, no need to add a revisited node 
+            // Perhaps a wall was hit, and backtracking is necessary.  No need to add the
+            // revisited node again.
+            if (!visitedNodes.Contains(currentNode))
+            {
+                visitedNodes.Add(currentNode);
+            }
+
+            Console.Clear();
+            Display(currentNode.SudokuBoardData, currentNode.GivenHints);
+
+            Node nextNode = new Node(currentNode.SudokuBoardData, currentNode.SudokuWordBankList, currentNode.SudokuUsedWordList, currentNode.GivenHints, currentNode.x, currentNode.y, currentNode.CurrentVariablePriority, currentNode);
+
+            if (AssignmentComplete(currentNode.SudokuBoardData))
+            {
+                finalPathOfNodes.Clear();
+                finalPathOfNodes.Add(currentNode);
+
+                while (currentNode.parentNode != null)
+                {
+
+                    nextNode = currentNode.parentNode;
+                    finalPathOfNodes.Add(nextNode);
+                    currentNode = nextNode;
+                }
+
+                Console.Clear();
+                Display(currentNode.SudokuBoardData, currentNode.GivenHints);
+
+                return true;
+            }
+            else
+            {                
+
+                // Make assignment
+                try
+                {
+
+                    currentNode.showNodeInfo();
+
+                    string chosenDirection = "";
+                    string chosenWord = "";
+                    int offset = 0;
+                    
+                    // try to choose the best variable
+                    // Minimum remaining values dictate which is the most constrained variables.                    
+                    currentNode.PossibleValuesDict = Node.calcPossibleSpots(currentNode.SudokuBoardData, currentNode.SudokuWordBankList, currentNode.SudokuUsedWordList, currentNode.GivenHints);
+
+                    // Choose word with least amount of available spots (most constrained), if there is a tie?                    
+                    string mostConstrainedVariable = "";
+                    Node mostConstrainedVariableNode = null;
+                    Dictionary<string, int> dictOfMostConstrainingVariables = new Dictionary<string, int>();
+                    Dictionary<string, int> sortedDictOfMostConstrainingVariables = new Dictionary<string, int>();
+
+                    foreach (KeyValuePair<string, List<String>> variable in currentNode.PossibleValuesDict)
+                    {
+                        dictOfMostConstrainingVariables.Add(variable.Key, variable.Value.Count);
+                    }
+
+                    //int min = dictOfMostConstrainingVariableNodes.Min(entry => entry.Value);
+                    //Dictionary<string, int> listOfValues = new Dictionary<string, int>();
+
+                    // Assume most constraining value is the longer words
+                    var sortedMostConstrainingVariables = dictOfMostConstrainingVariables.OrderBy(a => a.Value).ThenByDescending(b=>b.Key.Length);
+
+                    // Reduce domain?  // Forward checking, Arc Consistency
+
+                    // Loop through values with the lowest remaining values
+                    sortedDictOfMostConstrainingVariables = sortedMostConstrainingVariables.ToDictionary(r => r.Key, r => r.Value);
+                    List<string> keys = new List<string>(sortedDictOfMostConstrainingVariables.Keys);
+                    for (int mrv = 0; mrv < sortedDictOfMostConstrainingVariables.Count; mrv++)
+                    {
+                        // What is most constraining value?  This is assumed to be longest word...already sorted by this
+                        // Which value to choose?  Which value gives leaves the most remaining values for other nodes?
+                        
+                        nextNode.Word = keys[mrv];
+                        nextNode.findEligibleSpots();
+
+                        Dictionary<Node, int> dictOfLeastConstrainingValueNodes = new Dictionary<Node, int>();
+                        Dictionary<Node, int> sortedDictOfLeastConstrainingValueNodes = new Dictionary<Node, int>();
+
+                        // if no children found, backtrack...return false
+                        if (nextNode.childNodes != null && nextNode.childNodes.Count > 0)
+                        {
+                            // loop through most constraining value
+                            foreach (Node n in nextNode.childNodes)
+                            {
+                                if (n.Assignment.Equals("V,7,7: COQUETRY"))
+                                {
+                                    ;
+                                }
+                                n.PossibleValuesDict = Node.calcPossibleSpots(n.SudokuBoardData, n.SudokuWordBankList, n.SudokuUsedWordList, n.GivenHints);
+                                // forward check to see if there is a possible value for all words
+                                // if not, don't include it in the options for values
+            
+                                if (n.RemainingSpotsForAllWords)
+                                {
+                                    dictOfLeastConstrainingValueNodes.Add(n, n.PossibleRemainingSpots);
+                                }
+                                else
+                                {
+                                    ;
+                                }
+                            }
+
+                            // Assume most constraining value is the longer words
+                            // Sort order of this changes the results dramatically.  Actually returns better data for 1.1 by used the MostConstrainingValues
+                            var sortedLeastConstrainingValues = dictOfLeastConstrainingValueNodes.OrderByDescending(a => a.Value);
+
+                            // Loop through values with the least constraining values aka highest possible values
+                            sortedDictOfLeastConstrainingValueNodes = sortedLeastConstrainingValues.ToDictionary(r => r.Key, r => r.Value);
+
+                            List<Node> nodesOfLeastConstrainingValues = new List<Node>(sortedDictOfLeastConstrainingValueNodes.Keys);
+                            for (int lrv = 0; lrv < nodesOfLeastConstrainingValues.Count; lrv++)
+                            {
+                                if (nodesOfLeastConstrainingValues[lrv].Assignment.Equals("H,0,7: OBSTINACY"))
+                                {
+                                    ;
+                                }
+                                if (findDFSBackTrackingPath(nodesOfLeastConstrainingValues[lrv], visitedNodes, finalPathOfNodes, otherChildNodes, pruning))
+                                {
+                                    return true;
+                                }
+                                else
+                                {
+                                    nodesOfLeastConstrainingValues.Remove(nodesOfLeastConstrainingValues[lrv]);
+                                    lrv = -1;
+                                }
+
+                            }
+                            // No values worked, back track
+                            return false;
+                        }
+                        //else
+                        //{
+                        //    return false;
+                        //}
+                        
+
+                    }
+                }
+                catch (Exception e)
+                {
+
+                    ;
+
+                }
+
+            }
+            //// remove a word?  grid 3 hit here
+            //currentNode.SudokuWordBankList.Remove(currentNode.SudokuWordBankList[currentNode.SudokuWordBankList.Count-1]);
+            //if (findDFSBackTrackingPath(currentNode, visitedNodes, finalPathOfNodes, otherChildNodes))
+            //{
+            //    return true;
+            //}
+            return false;
+
+        }    
 
         static bool AssignmentComplete(char[,] board)
         {
             // Find any '_' to indicate incomplete assigments
 
-            for (int y = 8; y > 0; y--)
+            for (int y = 8; y >= 0; y--)
             {
                 for (int x = 0; x < 9; x++)
                 {
@@ -972,24 +754,184 @@ namespace WordSudoku
             return true;
         }
 
-        static void Display(char[,] board)
+        static void Display(char[,] board, List<string> givenHints)
         {
             //
             // Display everything in the List.
             //
             Console.WriteLine("Word Sudoku Board:");
 
-            for (int y = 8; y > 0; y--)
+            for (int y = 8; y >= 0; y--)
             {
                 for (int x = 0; x < 9; x++)
                 {
+                    foreach (string hint in givenHints)
+                    {
+                        if (Int32.Parse(hint.Split('_')[0]) == x && Int32.Parse(hint.Split('_')[1]) == y)
+                        {
+                            Console.BackgroundColor = ConsoleColor.Yellow;
+                        }
+                        
+                    }
                     Console.Write(board[x,y]);
+                    Console.BackgroundColor = ConsoleColor.Black;
                 }
                 Console.WriteLine();
             }
 
             Console.WriteLine();
             Console.WriteLine();
+        }
+
+        static void AC3(List<string> remainingWords, Dictionary<string, List<string>> dictValues, char[,] board, List<string> usedWords, List<string> givenHints)
+        {
+
+            List<string> queOfArcs = new List<string>();
+            // Populate List 
+            foreach (string word1 in remainingWords)
+            {
+                foreach (string word2 in remainingWords)
+                {
+                    if (!word1.Equals(word2)) {
+                        if (!queOfArcs.Contains(word1 + "_" + word2))
+                        {
+                            queOfArcs.Add(word1 + "_" + word2);
+                        }
+                    }
+                }
+                //if (!word.Equals(myWord))
+                //{
+                //    if (!queOfArcs.Contains(myWord + "_" + word))
+                //    {
+                //        queOfArcs.Add(myWord + "_" + word);
+                //    }
+                //}
+            }
+            int startMin = dictValues.Values.Min(i => i.Count);
+            int startTotal = dictValues.Values.Sum(i => i.Count);
+            int endMin = 0;
+            int endTotal = 0;
+            while (queOfArcs.Count() > 0)
+            {
+
+                string word1 = queOfArcs[0].Split('_')[0];
+                string word2 = queOfArcs[0].Split('_')[1];
+
+                queOfArcs.Remove(word1 + "_" + word2);
+
+                List<string> removedValues = new List<string>();
+                if (removeInconsistentValues(word1, word2, dictValues, board, remainingWords, usedWords, givenHints, removedValues))
+                {
+                    // will have to check what was removed
+                    // check words impacted by removing a letter of the word, add to queue
+                    
+                    foreach (string removedValue in removedValues)
+                    {
+                        // value H_0_8
+                        string direction = removedValue.Split('_')[0].ToString().ToUpper();
+                        int x = Int32.Parse(removedValue.Split('_')[1]);
+                        int y = Int32.Parse(removedValue.Split('_')[2]);
+
+                        if (direction.Equals("H"))
+                        {
+                            foreach (KeyValuePair<string, List<string>> kvp in dictValues)
+                            {
+                                // kvp {WORD, {LIST OF VALUES}}
+                                foreach (string location in kvp.Value)
+                                {
+                                    // check words impacted in the columns spanning the word
+                                    // since word can't go H_0_8
+                                    // any impacted words need to be added to the queue for rechecking
+                                    int tmpX = Int32.Parse(location.Split('_')[1]);
+                                    int tmpY = Int32.Parse(location.Split('_')[2]);
+
+                                    if (tmpY == y)
+                                    {
+                                        //if (tmpX >= x || tmpX <= (x + word1.Length - 1))
+                                        //{
+                                            if (!queOfArcs.Contains(kvp.Key + "_" + word1))
+                                            {
+                                                queOfArcs.Add(kvp.Key + "_" + word1);
+                                            }
+                                        //}                                        
+                                    }                                    
+                                }
+                            }
+                        }
+                        else
+                        {
+                            foreach (KeyValuePair<string, List<string>> kvp in dictValues)
+                            {
+                                // kvp {WORD, {LIST OF VALUES}}
+                                if (!kvp.Key.Equals(word1))
+                                {
+                                    foreach (string location in kvp.Value)
+                                    {
+                                        // check words impacted in the rows spanning the word
+                                        // since word can't go V_0_8
+                                        // any impacted words need to be added to the queue for rechecking
+                                        int tmpX = Int32.Parse(location.Split('_')[1]);
+                                        int tmpY = Int32.Parse(location.Split('_')[2]);
+
+                                        if (tmpX == x)
+                                        {
+                                            //if (tmpY >= y || tmpY <= (y - word1.Length - 1))
+                                            //{
+                                            if (!queOfArcs.Contains(kvp.Key + "_" + word1))
+                                            {
+                                                queOfArcs.Add(kvp.Key + "_" + word1);
+                                            }
+                                            //}
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                    
+                }
+                endMin = dictValues.Values.Min(i => i.Count);
+                endTotal = dictValues.Values.Sum(i => i.Count);
+            }
+            Console.WriteLine(startMin + " " + endMin);
+            Console.WriteLine(startTotal + " " + endTotal);
+        }
+
+        static bool removeInconsistentValues(string word1, string word2, Dictionary<string, List<string>> dictValues, char[,] board, List<string> remainingWords, List<string> usedWords, List<string> givenHints, List<string> removedValues)
+        {
+            bool removed = false;
+            List<string> possibleValuesWord1 = dictValues[word1];
+            List<string> possibleValuesWord2 = dictValues[word2];
+            char[,] tmpboard = (char[,])board.Clone();
+            char[,] newBoard = (char[,])board.Clone();
+            foreach (string value in possibleValuesWord1.ToList())
+            {
+                // value H_0_8
+                string direction = value.Split('_')[0].ToString().ToUpper();
+                int x = Int32.Parse(value.Split('_')[1]);
+                int y = Int32.Parse(value.Split('_')[2]);
+
+                newBoard = (char[,])tmpboard.Clone();
+                newBoard = Node.updateBoardAC3(newBoard, direction, x, y, word1);
+                try
+                {
+                    possibleValuesWord2 = Node.calcPossibleSpots(newBoard, remainingWords, usedWords, givenHints)[word2];
+                    if (possibleValuesWord2.Count == 0)
+                    {
+                        possibleValuesWord1.Remove(value);
+                        removedValues.Add(value);
+                        removed = true;
+                    }
+                }
+                catch
+                {
+                    possibleValuesWord1.Remove(value);                
+                    removedValues.Add(value);
+                    removed = true;
+                }
+            }
+            return removed;
         }
     }
 }
