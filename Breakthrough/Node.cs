@@ -17,6 +17,7 @@ namespace Breakthrough
         private Node _parentNode;  // reference to parent node
         private List<Node> _childNodes; // list of child nodes
         private Node _OtherNnode;
+        private int _depth; // indicate to which level this Node belongs
 
         private float _evalFunctionValue; //the difference between # offenders and # deffenders
 
@@ -26,7 +27,6 @@ namespace Breakthrough
 
         // public bool _isInitialized;
         // private char _role; // "o" or "x"
-        private int _depth;
 
         public Node(int x, int y, int[,] chessBoard)
         {
@@ -45,11 +45,12 @@ namespace Breakthrough
             //this._isInitialized = true;
         }
 
-        public Node(int x, int y, int[,] chessBoard, Node parentNode)
+        public Node(int x, int y, int[,] chessBoard, int turn, Node parentNode)
         {
             this._x = x;
             this._y = y;
             this._chessBoard = chessBoard;
+            this._turn = turn;
             this._parentNode = parentNode;
             //this._isInitialized = true;
         }
@@ -82,14 +83,24 @@ namespace Breakthrough
         {
             get { return this._parentNode; }
             set { this._parentNode = value; }
-
         }
 
         public List<Node> childNodes
         {
             get { return this._childNodes; }
             set { this._childNodes = value; }
+        }
 
+        public float evalFunctionValue
+        {
+            get { return this._evalFunctionValue; }
+            set { this._evalFunctionValue = value; }
+        }
+
+        public int depth
+        {
+            get { return this._depth; }
+            set { this._depth = value; }
         }
 
         //public bool Equals(Node n)
@@ -192,7 +203,7 @@ namespace Breakthrough
                 {
                     if (this._chessBoard[i, j] == - turn && (i - currNode._x) * turn < 0)
                     {
-                        if (isWalkable(currNode._x, currNode._y, turn))
+                        if (isWalkable(currNode._x, currNode._y, turn) && Math.Abs(currNode._x - i) >= Math.Abs(j - currNode._y))
                         {
                             threat[0] = i;
                             threat[1] = j;
@@ -216,7 +227,7 @@ namespace Breakthrough
             {
                 i = position[0];
                 j = position[1];
-                sumManhattanDistance += calcManhattanDistance(currNode._x, currNode._y, i, j);
+                sumManhattanDistance += Math.Abs(currNode._x - i);
             }
             return sumManhattanDistance / threatsList.Count;
         }
@@ -314,7 +325,7 @@ namespace Breakthrough
             return numOfEnemyToCapture;
         }
 
-        private int calcEvalFunctionValue(Node currNode, int turn)
+        public float calcEvalFunctionValue()
         {
             // calculating heuristic value of one of the three collums, which respectively shifted by +1/0/-1
             return 0;
@@ -354,6 +365,12 @@ namespace Breakthrough
             Node nextNode = sortList[0];
             return nextNode;
         }
+
+        //public bool terminalCheck(Node tempNode)
+        //{
+        //    // checking if the game has been terminated
+        //    if tempNode
+        //}
 
         public List<Node> getSuccessor(int [,] chessBoard, int turn)
         {
@@ -415,13 +432,65 @@ namespace Breakthrough
             Console.WriteLine(" Y Coordinate: " + this._y);
 
             Console.WriteLine("Breakthrough Board:");
+            bool colorFlip = true;
 
-            for (int y = 0; y < 7; y++)
+            for (int x = 0; x < 8; x++)
             {
-                for (int x = 0; x < 7; x++)
+                for (int y = 0; y < 8; y++)
                 {
-                    Console.Write(this._chessBoard[x, y]);
+                    if (x % 2 == 0)
+                    {
+                        if (colorFlip)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Black;
+                            Console.BackgroundColor = ConsoleColor.Gray;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Black;
+                            Console.BackgroundColor = ConsoleColor.White;
+                        }
+                        colorFlip = !colorFlip;
+                        if (this._chessBoard[x, y] == -1)
+                        {
+                            Console.Write(this._chessBoard[x, y]);
+                        }
+                        else if (this._chessBoard[x, y] == 0)
+                        {
+                            Console.Write("  ");
+                        }
+                        else
+                        {
+                            Console.Write("+" + this._chessBoard[x, y]);
+                        }
+                    }
+                    else
+                    {
+                        if (colorFlip)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Black;
+                            Console.BackgroundColor = ConsoleColor.White;
+                        }
+                        else
+                        {
+                            Console.BackgroundColor = ConsoleColor.Gray;
+                        }
+                        colorFlip = !colorFlip;
+                        if (this._chessBoard[x, y] == -1)
+                        {
+                            Console.Write(this._chessBoard[x, y]);
+                        }
+                        else if (this._chessBoard[x, y] == 0)
+                        {
+                            Console.Write("  ");
+                        }
+                        else
+                        {
+                            Console.Write("+" + this._chessBoard[x, y]);
+                        }
+                    }
                 }
+                Console.BackgroundColor = ConsoleColor.Black;
                 Console.WriteLine();
             }
             //Console.WriteLine(this.Assignment);

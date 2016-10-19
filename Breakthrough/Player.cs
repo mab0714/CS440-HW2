@@ -12,7 +12,7 @@ namespace Breakthrough
         private int _y;
 
         private int[,] _chessBoard;
-        private char _strategy;
+        private int _strategy;
         private string _algorithm;
         private int _depthToPredict;
 
