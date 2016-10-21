@@ -22,7 +22,7 @@ namespace WordSudoku
             }
             catch
             {
-                sudokuBoardFile = "I:\\Backup\\Masters\\UIUC\\2016\\Fall\\CS_440\\Homework\\2\\grid2.txt";
+                sudokuBoardFile = "I:\\Backup\\Masters\\UIUC\\2016\\Fall\\CS_440\\Homework\\2\\grid1.txt";
             }
 
             char[,] sudokuBoardData = new char[9,9];
@@ -66,7 +66,7 @@ namespace WordSudoku
             }
             catch
             {
-                sudokuWordBankFile = "I:\\Backup\\Masters\\UIUC\\2016\\Fall\\CS_440\\Homework\\2\\bank2.txt";
+                sudokuWordBankFile = "I:\\Backup\\Masters\\UIUC\\2016\\Fall\\CS_440\\Homework\\2\\bank1.txt";
             }
 
             lines = System.IO.File.ReadAllLines(sudokuWordBankFile);
