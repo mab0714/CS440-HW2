@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Breakthrough
 {
-    public class Node : IEquatable<Node>
+    public class Node 
     {
         // Piece location
         private int _x;
@@ -22,11 +22,16 @@ namespace Breakthrough
         private float _evalFunctionValue; //the difference between # offenders and # deffenders
 
         private int _turn; // claim which turn this node belongs, define "offender" as "true" & "deffender" as "false"
-        // Player1's home is located up
-        // Player2's home is located down
+                           // Player1's home is located up
+                           // Player2's home is located down
 
         // public bool _isInitialized;
         // private char _role; // "o" or "x"
+
+        public Node()
+        {
+            //this._isInitialized = true;
+        }
 
         public Node(int x, int y, int[,] chessBoard)
         {
@@ -103,57 +108,43 @@ namespace Breakthrough
             set { this._depth = value; }
         }
 
-        //public bool Equals(Node n)
+        //private int calcNumOfPlayer1(int[,] chessBoard)
         //{
-
-        //    for (int y = 0; y < 8; y++)
+        //    // calculateing number of player1 remaining on the board
+        //    int numOfPlayer1 = 0;
+        //    foreach (int item in chessBoard)
+        //        if (item == -1)
         //    {
-        //        for (int x = 0; x < 8; x++)
         //        {
-        //            if (!this._heuristicValue.Equals(n._heuristicValue))
-        //            {
-        //                return false;
-        //            }
+        //            numOfPlayer1++;
         //        }
         //    }
-
-        //    return true;
+        //    return numOfPlayer1;
         //}
 
-        private int calcNumOfPlayer1(int[,] chessBoard)
-        {
-            // calculateing number of player1 remaining on the board
-            int numOfPlayer1 = 0;
-            foreach (int item in chessBoard)
-                if (item == -1)
-            {
-                {
-                    numOfPlayer1++;
-                }
-            }
-            return numOfPlayer1;
-        }
+        //private int calcNumOfPlayer2(int[,] chessBoard)
+        //{
+        //    // calculateing number of pieces remaining on the board
+        //    int numOfPlayer2 = 0;
+        //    foreach (int item in chessBoard)
+        //    {
+        //        if (item == +1)
+        //        {
+        //            numOfPlayer2++;
+        //        }
+        //    }
+        //    return numOfPlayer2;
+        //}
 
-        private int calcNumOfPlayer2(int[,] chessBoard)
-        {
-            // calculateing number of pieces remaining on the board
-            int numOfPlayer2 = 0;
-            foreach (int item in chessBoard)
-            {
-                if (item == -1)
-                {
-                    numOfPlayer2++;
-                }
-            }
-            return numOfPlayer2;
-        }
-
-        private bool isWalkable(int x, int y, int turn)
+        private bool isWalkable()
         {
             // checking whether piece at [x, y] is walkable
             try
             {
-                if (this._chessBoard[x - turn, y - 1] == 0 || this._chessBoard[x - turn, y] == 0 || this._chessBoard[x - turn, y + 1] == 0)
+                if (((this._chessBoard[_x - _turn, _y - 1] != _turn && _y - 1 >= 0 && _y -1 < 8) || 
+                    (this._chessBoard[_x - _turn, _y] != _turn && _y >= 0 && _y <= 8) || 
+                    (this._chessBoard[_x - turn, _y + 1] != _turn && _y + 1 >= 0 && _y + 1 < 8)) && 
+                    (_x - _turn < 8 && _x - _turn >= 0))
                 {
                     return true;
                 }
@@ -190,7 +181,7 @@ namespace Breakthrough
 
 
 
-        private List<int []> findThreats(Node currNode, int turn)
+        private List<int []> findThreats()
         {
             // finding all threats for piece at [x, y] and saving them in a list
             // var threat = new Tuple<int, int>;
@@ -201,9 +192,9 @@ namespace Breakthrough
             {
                 for (int j = 0; j < 7; j++)
                 {
-                    if (this._chessBoard[i, j] == - turn && (i - currNode._x) * turn < 0)
+                    if (this._chessBoard[i, j] == - _turn && (i - _x) * _turn < 0)
                     {
-                        if (isWalkable(currNode._x, currNode._y, turn) && Math.Abs(currNode._x - i) >= Math.Abs(j - currNode._y))
+                        if (isWalkable() && Math.Abs(_x - i) >= Math.Abs(j - _y))
                         {
                             threat[0] = i;
                             threat[1] = j;
@@ -215,19 +206,19 @@ namespace Breakthrough
             return threatsList;
         }
 
-        private float calcMeanManhattanDistance(Node currNode, int turn)
+        private float calcMeanManhattanDistance()
         {
             // calculating mean Manhattan distance used in the evaluation function
             int i = 0;
             int j = 0;
             int sumManhattanDistance = 0;
             //List<int> threats = new List<int>();
-            List<int []> threatsList = findThreats(currNode, turn);
+            List<int []> threatsList = findThreats();
             foreach (int[] position in threatsList)
             {
                 i = position[0];
                 j = position[1];
-                sumManhattanDistance += Math.Abs(currNode._x - i);
+                sumManhattanDistance += Math.Abs(_x - i);
             }
             return sumManhattanDistance / threatsList.Count;
         }
@@ -246,13 +237,13 @@ namespace Breakthrough
             return z;
         }
 
-        private int numOfPieces(int turn)
+        private int numOfPieces()
         {
             // calculate number of pieces
             int numOfPieces = 0;
             foreach (int item in this._chessBoard)
             {
-                if (item == turn)
+                if (item == _turn)
                 {
                     numOfPieces++;
                 }
@@ -260,24 +251,24 @@ namespace Breakthrough
             return numOfPieces;
         }
 
-        private int numOfThreats(Node currNode, int turn)
+        private int numOfThreats()
         {
             List<int[]> listOfThreats = new List<int[]>();
-            listOfThreats = this.findThreats(currNode, turn);
+            listOfThreats = this.findThreats();
             return listOfThreats.Count;
         }
 
-        private int maxManhattanDistToHomeBase(int turn)
+        private int maxManhattanDistToHomeBase()
         {
             // calculating the Manhattan distance of the furthest piece of PlayerX
             int temp = 0;
-            if (turn == -1)
+            if (_turn == -1)
             {
-                for (int i = 0; i < 7; i++)
+                for (int i = 0; i < 8; i++)
                 {
-                    for (int j = 0; j < 7; j++)
+                    for (int j = 0; j < 8; j++)
                     {
-                        if (this._chessBoard[i, j] == turn)
+                        if (this._chessBoard[i, j] == _turn)
                         {
                             if (i > temp)
                             {
@@ -287,11 +278,11 @@ namespace Breakthrough
                     }
                 }
             }
-            if (turn == -1)
+            if (turn == 1)
             {
-                for (int i = 0; i < 7; i++)
+                for (int i = 0; i < 8; i++)
                 {
-                    for (int j = 0; j < 7; j++)
+                    for (int j = 0; j < 8; j++)
                     {
                         if (this._chessBoard[i, j] == turn)
                         {
@@ -306,65 +297,69 @@ namespace Breakthrough
             return temp;
         }
 
-        private int numOfEnemyToCapture(Node currNode, int turn)
+        private int numOfEnemyToCapture()
         {
             // calculating number of enemy's pieces to capture
             int numOfEnemyToCapture = 0;
-            if (this._chessBoard[currNode._x - turn, currNode._y - 1] == turn)
+            if (this._chessBoard[_x - _turn, _y - 1] == _turn)
             {
                 numOfEnemyToCapture++;
             }
-            if (this._chessBoard[currNode._x - turn, currNode._y] == turn)
-            {
-                numOfEnemyToCapture++;
-            }
-            if (this._chessBoard[currNode._x - turn, currNode._y + 1] == turn)
+            //if (this._chessBoard[currNode._x - turn, currNode._y] == turn)
+            //{
+            //    numOfEnemyToCapture++;
+            //}
+            if (this._chessBoard[_x - _turn, _y + 1] == _turn)
             {
                 numOfEnemyToCapture++;
             }
             return numOfEnemyToCapture;
         }
 
-        public float calcEvalFunctionValue()
+        public float calcEvalFunctionValue(Node tempNode)
         {
             // calculating heuristic value of one of the three collums, which respectively shifted by +1/0/-1
-            return 0;
+            return tempNode.numOfPieces() + tempNode.numOfThreats() + 
+                tempNode.maxManhattanDistToHomeBase() + tempNode.numOfEnemyToCapture();
         }
 
-        public void addChild(Node tmpNode)
+        public Node findNodesOfValue(float value, List<Node> bottomNodes, int maxDepth)
         {
-            try
+            List<Node> theNodes = new List<Node>();
+            foreach (Node tempNode in bottomNodes)
             {
-                if (_childNodes == null)
+                if (tempNode.evalFunctionValue == value)
                 {
-                    _childNodes = new List<Node>();
+                    theNodes.Add(tempNode);
                 }
-                _childNodes.Add(tmpNode);  //Null reference
-
             }
-            catch (Exception e)
+            Node theNode = theNodes[0]; // Having a tie here, just pick the option stored as the first element in the list without tie breaker.
+
+            while (theNode.depth != 1)
             {
-                Console.WriteLine("Error adding Child for x: " + tmpNode._x + ", y: " + tmpNode._y + " due to: " + e.InnerException + " " + e.Message);
+                theNode = theNode.parentNode;
             }
+            return theNode;
         }
 
-        public Node maxValue(Node currentNode)
-        {
-            // maximizer
-            List<Node> sortList = new List<Node>();
-            sortList = currentNode.childNodes.OrderByDescending(o => o._evalFunctionValue).ToList();
-            Node nextNode = sortList[0];
-            return nextNode;
-        }
+        //public void addChild(Node tmpNode)
+        //{
+        //    try
+        //    {
+        //        if (_childNodes == null)
+        //        {
+        //            _childNodes = new List<Node>();
+        //        }
+        //        _childNodes.Add(tmpNode);  //Null reference
 
-        public Node miniValue(Node currentNode)
-        {
-            // minimizer
-            List<Node> sortList = new List<Node>();
-            sortList = currentNode.childNodes.OrderBy(o => o._evalFunctionValue).ToList();
-            Node nextNode = sortList[0];
-            return nextNode;
-        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Console.WriteLine("Error adding Child for x: " + tmpNode._x + ", y: " + tmpNode._y + " due to: " + e.InnerException + " " + e.Message);
+        //    }
+        //}
+
+
 
         //public bool terminalCheck(Node tempNode)
         //{
@@ -372,46 +367,46 @@ namespace Breakthrough
         //    if tempNode
         //}
 
-        public List<Node> getSuccessor(int [,] chessBoard, int turn)
+        public List<Node> getSuccessor()
         {
             // finding children nodes of tempNode
             int[,] tempBoard;
             Node tempChildNode;
             List<Node> successors = new List<Node>();
-            for (int i=0; i<7; i++)
+            for (int i = 1; i < 7; i++)
             {
-                for (int j = 0; j < 7; j++)
+                for (int j = 1; j < 7; j++)
                 {
-                    if (chessBoard[i, j] == turn)
+                    if (_chessBoard[i, j] == _turn)
                     {
-                        Node tempNode = new Node(i, j, chessBoard, turn);
-                        if (numOfThreats(tempNode, turn) == 0 && isWalkable(tempNode._x, tempNode._y, turn))
+                        Node tempNode = new Node(i, j, _chessBoard, _turn);
+                        if (/*numOfThreats(tempNode, turn) == 0 && */isWalkable())
                         {
-                            // moving piece at [i, j] to [i - turn, j -1] (moving to its 10 o'clock position)
-                            tempBoard = chessBoard;
-                            tempBoard[i - turn, j - 1] = chessBoard[i, j];
+                            // moving piece at [i, j] to [i - turn, j - 1] (moving to its 10 o'clock for player2 or 4 o'clock for player1 position)
+                            tempBoard = _chessBoard;
+                            tempBoard[i - _turn, j - 1] = _chessBoard[i, j];
                             tempBoard[i, j] = 0;
-                            tempChildNode = new Node(i - turn, j - 1, tempBoard, turn);
+                            tempChildNode = new Node(i - _turn, j - 1, tempBoard, _turn);
                             if (!successors.Contains(tempChildNode))
                             {
                                 successors.Add(tempChildNode);
                             }
 
-                            // moving piece at [i, j] to [i - turn, j] (moving to its 12 o'clock position)
-                            tempBoard = chessBoard;
-                            tempBoard[i - turn, j] = chessBoard[i, j];
+                            // moving piece at [i, j] to [i - turn, j] (moving to its 12 o'clock for player2 or 6 o'clock for player1 position)
+                            tempBoard = _chessBoard;
+                            tempBoard[i - _turn, j] = _chessBoard[i, j];
                             tempBoard[i, j] = 0;
-                            tempChildNode = new Node(i - turn, j, tempBoard, turn);
+                            tempChildNode = new Node(i - _turn, j, tempBoard, _turn);
                             if (!successors.Contains(tempChildNode))
                             {
                                 successors.Add(tempChildNode);
                             }
 
-                            // moving piece at [i, j] to [i - turn, j+1] (moving to its 2 o'clock postion)
-                            tempBoard = chessBoard;
-                            tempBoard[i - turn, j + 1] = chessBoard[i, j];
+                            // moving piece at [i, j] to [i - turn, j + 1] (moving to its 2 o'clock for player2 or 8 o'clock postion)
+                            tempBoard = _chessBoard;
+                            tempBoard[i - _turn, j + 1] = _chessBoard[i, j];
                             tempBoard[i, j] = 0;
-                            tempChildNode = new Node(i - turn, j + 1, tempBoard, turn);
+                            tempChildNode = new Node(i - _turn, j + 1, tempBoard, _turn);
                             if (!successors.Contains(tempChildNode))
                             {
                                 successors.Add(tempChildNode);
@@ -493,14 +488,15 @@ namespace Breakthrough
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.WriteLine();
             }
+            Console.ForegroundColor = ConsoleColor.White;
             //Console.WriteLine(this.Assignment);
             Console.WriteLine("******************");
         }
 
-        public bool Equals(Node other)
-        {
-            return ((IEquatable<Node>)_parentNode).Equals(other);
-        }
+        //public bool equals(node other)
+        //{
+        //    return ((iequatable<node>)_parentnode).equals(other);
+        //}
 
     }
 
