@@ -22,6 +22,10 @@ namespace WordSudoku
 
         private int _x;
         private int _y;
+        private string _word;
+        private int _possibleRemainingSpots;
+        private bool _remainingSpotsForAllWords;
+        private int _minimumValuesForAVariable;
 
         private string _assignment;
 
@@ -50,6 +54,30 @@ namespace WordSudoku
         {
             get { return this._y; }
             set { this._y = value; }
+        }
+
+        public int PossibleRemainingSpots
+        {
+            get { return this._possibleValuesDict.Sum(v => v.Value.Count()); }
+            set { this._possibleRemainingSpots = value; }
+        }
+
+        public int MinimumValuesForAVariable
+        {
+            get { return this._possibleValuesDict.Min(v => v.Value.Count()); }
+            set { this._minimumValuesForAVariable = value; }
+        }
+
+        public bool RemainingSpotsForAllWords
+        {
+            get { return this._possibleValuesDict.Count == this._sudokuWordBankList.Count; }
+            set { this._remainingSpotsForAllWords = value; }
+        }
+
+        public string Word
+        {
+            get { return this._word; }
+            set { this._word = value; }
         }
 
         public string Assignment
@@ -111,7 +139,7 @@ namespace WordSudoku
         public bool Equals(Node n)
         {
 
-            for (int y = 8; y > 0; y--)
+            for (int y = 8; y >= 0; y--)
             {
                 for (int x = 0; x < 9; x++)
                 {
@@ -127,6 +155,50 @@ namespace WordSudoku
 
         }
 
+        public List<Node> findEligibleSpots()
+        {
+            this._possibleValuesDict = calcPossibleSpots(this._sudokuBoardData, this._sudokuWordBankList, this._sudokuUsedWordList, this._givenHints);
+
+            foreach (string option in this._possibleValuesDict[this._word])
+            {
+                char[,] newBoardData = new char[this._sudokuBoardData.GetLength(0), this._sudokuBoardData.GetLength(1)];
+                Array.Copy(this._sudokuBoardData, newBoardData, this._sudokuBoardData.Length);
+                List<string> newWordBankList = new List<string>(this._sudokuWordBankList);
+                List<string> newUsedWordList = new List<string>(this._sudokuUsedWordList);
+                Dictionary<string, int> newVariablePriority = new Dictionary<string, int>(this._currentVariablePriority);
+                Node tmpNode;
+
+                // Need to assign option to x,y option: H_WORD1, V_WORD2
+                // Handle offset
+                string direction = option.Split('_')[0].ToString().ToUpper();
+                int x = Int32.Parse(option.Split('_')[1].ToString());
+                int y = Int32.Parse(option.Split('_')[2].ToString());
+
+                if (this._word.Contains("_"))
+                {
+                    string word = this._word;
+                    word = word.Substring(this._word.IndexOf("_") + 1);
+                    newBoardData = updateBoard(newBoardData, direction, x, y, word, newVariablePriority);
+                }
+                else
+                {
+                    newBoardData = updateBoard(newBoardData, direction, x, y, this._word, newVariablePriority);
+                }
+
+                newUsedWordList.Add(this._word);
+                newWordBankList.Remove(this._word);
+
+                tmpNode = new Node(newBoardData, newWordBankList, newUsedWordList, this._givenHints, x, y, newVariablePriority, this);
+
+                tmpNode.Assignment = direction + "," + x + "," + y + ": " + this._word;
+                tmpNode.Word = this._word;
+                tmpNode.SudokuWordBankList = newWordBankList;
+                AddChild(tmpNode);
+
+            }
+
+            return _childNodes;
+        }
         public List<Node> findEligibleAssignments()
         {
             this._possibleValuesDict = calcPossibleValues(this._sudokuBoardData, this._sudokuWordBankList, this._sudokuUsedWordList, this._givenHints);
@@ -152,137 +224,27 @@ namespace WordSudoku
                 }
                 else
                 {
-                    newBoardData = updateBoard(newBoardData, direction, this._x, this._y - offset, word, newVariablePriority);
+                    newBoardData = updateBoard(newBoardData, direction, this._x, this._y + offset, word, newVariablePriority);
                 }
 
                 newUsedWordList.Add(option.Split('_')[1].ToUpper());
                 newWordBankList.Remove(option.Split('_')[1].ToUpper());
                 
                 tmpNode = new Node(newBoardData, newWordBankList, newUsedWordList, this._givenHints, this._x, this._y, newVariablePriority, this);
-                tmpNode.Assignment = option.Split('_')[0].ToUpper() + "," + this._x + "," + this.y + ": " + option;
+                if (direction.Equals("H"))
+                {
+                    tmpNode.Assignment = option.Split('_')[0].ToUpper() + "," + (this._x - offset) + "," + this.y + ": " + option.Split('_')[1].ToString();
+                }
+                else
+                {
+                    tmpNode.Assignment = option.Split('_')[0].ToUpper() + "," + this._x + "," + (this.y + offset) + ": " + option.Split('_')[1].ToString();
+                }
                 AddChild(tmpNode);
 
             }
  
             return _childNodes;
         }
-
-        //public List<Node> findEligibleChildrenA(List<List<char>> mazeBoard)
-        //{
-        //    // See N   check if parentNode is not null, then check i'm not going to revisit a parent
-        //    Node tmpNode = new Node(this._x, this._y - 1, this);
-
-        //    if (isWalkable(this._x, this._y - 1, mazeBoard))
-        //    {
-        //        tmpNode.g = tmpNode.parentNode.g + 1;
-        //        tmpNode.h = calcManhattanDistance(this._x, this.y - 1);
-        //        tmpNode.f = tmpNode.g + tmpNode.h;
-        //        tmpNode.goalStateNode = this.goalStateNode;
-        //        AddChild(tmpNode);
-        //    }
-
-
-
-        //    //// See NE
-        //    //tmpNode = new Node(this._x + 1, this._y - 1, this);
-        //    //if (isWalkable(this._x + 1, this._y - 1, mazeBoard))
-        //    //{
-        //    //    tmpNode.g = tmpNode.parentNode.g + 14;
-        //    //    tmpNode.h = calcManhattanDistance(this._x + 1, this.y - 1);
-        //    //    tmpNode.f = tmpNode.g + tmpNode.h;
-        //    //    tmpNode.goalStateNode = this.goalStateNode;
-        //    //    AddChild(tmpNode);
-        //    //}
-
-        //    // See E
-        //    tmpNode = new Node(this._x + 1, this._y, this);
-        //    if (isWalkable(this._x + 1, this._y, mazeBoard))
-        //    {
-        //        tmpNode.g = tmpNode.parentNode.g + 1;
-        //        tmpNode.h = calcManhattanDistance(this._x + 1, this._y);
-        //        tmpNode.f = tmpNode.g + tmpNode.h;
-        //        tmpNode.goalStateNode = this.goalStateNode;
-        //        AddChild(tmpNode);
-        //    }
-
-        //    //// See SE
-        //    //tmpNode = new Node(this._x + 1, this._y + 1, this);
-        //    //if (isWalkable(this._x + 1, this._y + 1, mazeBoard))
-        //    //{
-        //    //    tmpNode.g = tmpNode.parentNode.g + 14;
-        //    //    tmpNode.h = calcManhattanDistance(this._x + 1, this._y + 1);
-        //    //    tmpNode.f = tmpNode.g + tmpNode.h;
-        //    //    tmpNode.goalStateNode = this.goalStateNode;
-        //    //    AddChild(tmpNode);
-        //    //}
-
-        //    // See S
-        //    tmpNode = new Node(this._x, this._y + 1, this);
-        //    if (isWalkable(this._x, this._y + 1, mazeBoard))
-        //    {
-        //        tmpNode.g = tmpNode.parentNode.g + 1;
-        //        tmpNode.h = calcManhattanDistance(this._x, this._y + 1);
-        //        tmpNode.f = tmpNode.g + tmpNode.h;
-        //        tmpNode.goalStateNode = this.goalStateNode;
-        //        AddChild(tmpNode);
-        //    }
-
-        //    //// See SW
-        //    //tmpNode = new Node(this._x - 1, this._y + 1, this);
-        //    //if (isWalkable(this._x - 1, this._y + 1, mazeBoard))
-        //    //{
-        //    //    tmpNode.g = tmpNode.parentNode.g + 14;
-        //    //    tmpNode.h = calcManhattanDistance(this._x - 1, this.y + 1);
-        //    //    tmpNode.f = tmpNode.g + tmpNode.h;
-        //    //    tmpNode.goalStateNode = this.goalStateNode;
-        //    //    AddChild(tmpNode);
-        //    //}
-
-        //    // See W
-        //    tmpNode = new Node(this._x - 1, this._y, this);
-        //    if (isWalkable(this._x - 1, this._y, mazeBoard))
-        //    {
-        //        tmpNode.g = tmpNode.parentNode.g + 1;
-        //        tmpNode.h = calcManhattanDistance(this._x - 1, this._y);
-        //        tmpNode.f = tmpNode.g + tmpNode.h;
-        //        tmpNode.goalStateNode = this.goalStateNode;
-        //        AddChild(tmpNode);
-        //    }
-
-        //    //// See NW
-        //    //tmpNode = new Node(this._x - 1, this._y - 1, this);
-        //    //if (isWalkable(this._x - 1, this._y - 1, mazeBoard))
-        //    //{
-        //    //    tmpNode.g = tmpNode.parentNode.g + 14;
-        //    //    tmpNode.h = calcManhattanDistance(this._x - 1, this._y - 1);
-        //    //    tmpNode.f = tmpNode.g + tmpNode.h;
-        //    //    tmpNode.goalStateNode = this.goalStateNode;
-        //    //    AddChild(tmpNode);
-        //    //}
-        //    if (this._parentNode != null && this._childNodes != null)
-        //    {
-        //        _childNodes.Remove(this._parentNode);
-        //    }
-        //    return _childNodes;
-        //}
-        //private bool isWalkable(int x, int y, List<List<char>> mazeBoard)
-        //{
-        //    try
-        //    {
-        //        if (mazeBoard[y][x].Equals(' ') || mazeBoard[y][x].Equals('.'))
-        //        {
-        //            return true;
-        //        }
-        //        else
-        //        {
-        //            return false;
-        //        }
-        //    }
-        //    catch
-        //    {
-        //        return false;
-        //    }
-        //}
 
         public char[,] updateBoard(char[,] board, string direction, int x, int y, string word, Dictionary<string, int> newVariablePriority)
         {
@@ -291,10 +253,10 @@ namespace WordSudoku
             int charWordY = 0;
             if (direction.ToUpper().Equals("H"))
             {
-                for (int tmpX = x; tmpX < charWord.Length; tmpX++)
+                for (int tmpX = x; tmpX < charWord.Length + x; tmpX++)
                 {
                     board[tmpX, y] = charWord[charWordX];
-                    newVariablePriority.Remove(tmpX + "_" + y);
+                    //newVariablePriority.Remove(tmpX + "_" + y);
                     charWordX++;
                 }           
             }
@@ -303,7 +265,7 @@ namespace WordSudoku
                 for (int tmpY = y; tmpY > y-charWord.Length; tmpY--)
                 {
                     board[x, tmpY] = charWord[charWordY];
-                    newVariablePriority.Remove(x + "_" + tmpY);
+                    //newVariablePriority.Remove(x + "_" + tmpY);
                     charWordY++;
                 }
             }
@@ -319,6 +281,33 @@ namespace WordSudoku
             //        }
             //    }
             //}
+
+            return board;
+        }
+
+        static public char[,] updateBoardAC3(char[,] board, string direction, int x, int y, string word)
+        {
+            char[] charWord = word.ToCharArray();
+            int charWordX = 0;
+            int charWordY = 0;
+            if (direction.ToUpper().Equals("H"))
+            {
+                for (int tmpX = x; tmpX < charWord.Length + x; tmpX++)
+                {
+                    board[tmpX, y] = charWord[charWordX];
+                    //newVariablePriority.Remove(tmpX + "_" + y);
+                    charWordX++;
+                }
+            }
+            else
+            {
+                for (int tmpY = y; tmpY > y - charWord.Length; tmpY--)
+                {
+                    board[x, tmpY] = charWord[charWordY];
+                    //newVariablePriority.Remove(x + "_" + tmpY);
+                    charWordY++;
+                }
+            }
 
             return board;
         }
@@ -355,10 +344,186 @@ namespace WordSudoku
                     newDict.Add(x + "_" + y, tmpList);
                     //}
                 }
-                Console.WriteLine();
             }
 
             return newDict;
+        }
+
+        public static Dictionary<string, List<string>> calcPossibleSpots(char[,] tmpboard, List<string> wordList, List<string> usedWordList, List<string> givenHints)
+        {
+            char[,] board = (char[,])tmpboard.Clone();
+            Dictionary<string, List<string>> newDict = new Dictionary<string, List<string>>();
+            Dictionary<string, List<string>> newSpots = new Dictionary<string, List<string>>();
+            // Loop through the board to get the variables
+            for (int y = 8; y >= 0; y--)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    //if (board[x, y].Equals('_'))
+                    //{
+                    if (x == 2 && y == 7)
+                    {
+                        ;
+                    }
+                    List<string> tmpList = getPossibleWords(board, x, y, wordList, usedWordList, givenHints);
+                    newDict.Add(x + "_" + y, tmpList);
+                    //}
+                }
+            }
+
+            foreach (KeyValuePair<string, List<string>> kvp in newDict)
+            {
+                foreach (string word in kvp.Value)
+                {
+                    string direction = word.Split('_')[0].ToString();
+                    string potentialWord = word.Split('_')[1].ToString();
+                    int offset = Int32.Parse(word.Split('_')[2].ToString());
+
+                    int tmpX = 0;
+                    int tmpY = 0;
+                    List<string> spots = new List<string>();
+                    if (direction.ToUpper().Equals("H"))
+                    {
+                        tmpX = Int32.Parse(kvp.Key.Split('_')[0].ToString()) - offset;
+                        tmpY = Int32.Parse(kvp.Key.Split('_')[1].ToString());
+                        try
+                        {
+                            spots = newSpots[potentialWord];
+                        }
+                        catch
+                        {
+                            ;
+                        }
+                        if (!spots.Contains(direction + "_" + tmpX + "_" + tmpY))
+                        {
+                            spots.Add(direction + "_" + tmpX + "_" + tmpY);
+                        }
+                    }
+                    else
+                    {
+                        tmpX = Int32.Parse(kvp.Key.Split('_')[0].ToString());
+                        tmpY = Int32.Parse(kvp.Key.Split('_')[1].ToString()) + offset;
+                        try
+                        {
+                            spots = newSpots[potentialWord];
+                        }
+                        catch
+                        {
+                            ;
+                        }
+
+                        if (!spots.Contains(direction + "_" + tmpX + "_" + tmpY))
+                        {
+                            spots.Add(direction + "_" + tmpX + "_" + tmpY);
+                        }
+                    }
+                    newSpots[potentialWord] = spots;
+                }
+            }
+
+
+            //foreach (KeyValuePair<string, List<string>> kvp in newDict)
+            //{
+            //    foreach (string word in kvp.Value)
+            //    {
+            //        string direction = word.Split('_')[0].ToString();
+            //        string potentialWord = word.Split('_')[1].ToString();
+            //        int offset = Int32.Parse(word.Split('_')[2].ToString());
+
+            //        int tmpX = 0;
+            //        int tmpY = 0;
+            //        List<string> spots = new List<string>();
+            //        if (direction.ToUpper().Equals("H"))
+            //        {
+            //            tmpX = Int32.Parse(kvp.Key.Split('_')[0].ToString()) - offset;
+            //            tmpY = Int32.Parse(kvp.Key.Split('_')[1].ToString());
+            //            try
+            //            {
+            //                spots = newSpots[potentialWord];
+            //            }
+            //            catch
+            //            {
+            //                ;
+            //            }
+            //            if (!spots.Contains(direction + "_" + tmpX + "_" + tmpY))
+            //            {
+            //                spots.Add(direction + "_" + tmpX + "_" + tmpY);
+            //            }
+            //        }
+            //        else
+            //        {
+            //            tmpX = Int32.Parse(kvp.Key.Split('_')[0].ToString());
+            //            tmpY = Int32.Parse(kvp.Key.Split('_')[1].ToString()) + offset;
+            //            try
+            //            {
+            //                spots = newSpots[potentialWord];
+            //            }
+            //            catch
+            //            {
+            //                ;
+            //            }
+
+            //            if (!spots.Contains(direction + "_" + tmpX + "_" + tmpY))
+            //            {
+            //                spots.Add(direction + "_" + tmpX + "_" + tmpY);
+            //            }
+            //        }
+            //        newSpots[potentialWord] = spots;
+            //    }
+            //}
+
+            //foreach (KeyValuePair<string, List<string>> kvp in newDict)
+            //{
+            //    foreach (string word in kvp.Value)
+            //    {
+            //        string direction = word.Split('_')[0].ToString();
+            //        string potentialWord = word.Split('_')[1].ToString();
+            //        int offset = Int32.Parse(word.Split('_')[2].ToString());
+
+            //        int tmpX = 0;
+            //        int tmpY = 0;
+            //        List<string> spots = new List<string>();
+            //        if (direction.ToUpper().Equals("H"))
+            //        {
+            //            tmpX = Int32.Parse(kvp.Key.Split('_')[0].ToString()) - offset;
+            //            tmpY = Int32.Parse(kvp.Key.Split('_')[1].ToString());
+            //            try
+            //            {
+            //                spots = newSpots[potentialWord];
+            //            }
+            //            catch
+            //            {
+            //                ;
+            //            }
+            //            if (!spots.Contains(tmpX + "_" + tmpY))
+            //            {
+            //                spots.Add(tmpX + "_" + tmpY);
+            //            }
+            //        }
+            //        else
+            //        {
+            //            tmpX = Int32.Parse(kvp.Key.Split('_')[0].ToString());
+            //            tmpY = Int32.Parse(kvp.Key.Split('_')[1].ToString()) + offset;
+            //            try
+            //            {
+            //                spots = newSpots[potentialWord];
+            //            }
+            //            catch
+            //            {
+            //                ;
+            //            }
+
+            //            if (!spots.Contains(tmpX + "_" + tmpY))
+            //            {
+            //                spots.Add(tmpX + "_" + tmpY);
+            //            }
+            //        }
+            //        newSpots[potentialWord] = spots;
+            //    }
+            //}
+
+
+            return newSpots;
         }
 
         static List<string> getPossibleWords(char[,] tmpboard, int x, int y, List<string> wordList, List<string> usedWordList, List<string> givenHints)
@@ -375,7 +540,10 @@ namespace WordSudoku
 
             foreach (string line in wordList)
             {                                
-
+                if (line.Equals("BOATING"))
+                {
+                    ;
+                }
                 // Horizontal
                 // Store all offsets as a possible word
                 // IE: (2,8), word is DOG
@@ -401,15 +569,16 @@ namespace WordSudoku
                 // if it is NOT used yet
                 if (!usedWordList.Contains(line))
                 {
+
                     // word too long for remaining x positions
                     //if (satisfyRowLength)
                     //{
                         // Qualifies horizontally
 
-                    for (int tmpX = 0; tmpX <= x && (line.Length - 1 + tmpX) <= 8; tmpX++)
+                    for (int tmpX = x; tmpX <= x && (line.Length - 1 + tmpX) <= 8; tmpX++)
                     {
                         //H_CONFUSE_2
-                        if (line.Equals("CONFUSE") && x == 4 && tmpX == 2 && y == 7) {
+                        if (line.Equals("BOATING") && x == 2 && y == 7) {
                             ;
                         }
                         uniqueInCol = isUniqueInCol(board, tmpX, y, line);
@@ -434,7 +603,7 @@ namespace WordSudoku
                     //if (satisfyColLength)
                     //{
                     // Qualifies vertically      
-                    for (int tmpY = 8; tmpY >= y && (tmpY - line.Length + 1 >= 0); tmpY--)
+                    for (int tmpY = y; tmpY >= y && (tmpY - line.Length + 1 >= 0); tmpY--)
                     {
                         uniqueInRow = isUniqueInRow(board, x, tmpY, line);
                         uniqueInCell = isUniqueInCell(board, x, tmpY, line, 'v');
@@ -474,6 +643,10 @@ namespace WordSudoku
                             return false;
                         }
                     }
+                    else
+                    {
+                        board[tmpX, y] = word[tmpX - x];
+                    }
                 }
 
             }
@@ -489,8 +662,64 @@ namespace WordSudoku
                             return false;
                         }
                     }
+                    else
+                    {
+                        board[x, tmpY] = word[revY];
+                    }
                     revY++;
                 }
+            }
+
+            string colLine = "";
+            string tmpColLine = "";
+            for (int chkX = 0; chkX < board.GetLength(0); chkX++)
+            {
+                for (int chkY = 0; chkY < board.GetLength(1); chkY++)
+                {
+                    tmpColLine = tmpColLine + board[chkX, chkY].ToString();
+                }
+                // check for uniqueness in the string by filtering out distinct values of the linue using Linq
+                // if the string returns to anything less than 9, then there was some duplication
+                // and there is a violation of distinct letters in a row
+                // remove '_'
+                colLine = tmpColLine;
+                if (colLine.Contains("_"))
+                {
+                    colLine = tmpColLine.Replace("_", "");
+                }
+
+                int tempLineLength = colLine.Length;
+                if (colLine.ToCharArray().Distinct().ToArray().Length < tempLineLength)
+                {
+                    return false;
+                }
+                tmpColLine = "";
+            }
+
+            string rowLine = "";
+            string tmpRowLine = "";
+            for (int chkY = 0; chkY < board.GetLength(1); chkY++)
+            {
+                for (int chkX = 0; chkX < board.GetLength(0); chkX++)
+                {
+                    tmpRowLine = tmpRowLine + board[chkX, chkY].ToString();
+                }
+                // check for uniqueness in the string by filtering out distinct values of the linue using Linq
+                // if the string returns to anything less than 9, then there was some duplication
+                // and there is a violation of distinct letters in a row
+                // remove '_'
+                rowLine = tmpRowLine;
+                if (rowLine.Contains("_"))
+                {
+                    rowLine = tmpRowLine.Replace("_", "");
+                }
+
+                int tempLineLength = rowLine.Length;
+                if (rowLine.ToCharArray().Distinct().ToArray().Length < tempLineLength)
+                {
+                    return false;
+                }
+                tmpRowLine = "";
             }
 
             return true;
@@ -528,7 +757,7 @@ namespace WordSudoku
                 char c = char.Parse(hint.Split('_')[2].ToString());
 
                 // if board doesn't match any hint
-                if (!board[hintX, hintY].Equals(c))
+                if (board[hintX, hintY] != c)
                 {
                     return false;
                 }
@@ -595,8 +824,8 @@ namespace WordSudoku
                 // if the string returns to anything less than 9, then there was some duplication
                 // and there is a violation of distinct letters in a row
                 // remove '_'
-                string tmpLine = "";
-                if (line.Contains("_"))
+                string tmpLine = line;
+                if (tmpLine.Contains("_"))
                 {
                     tmpLine = line.Replace("_", "");
                 }
@@ -646,8 +875,8 @@ namespace WordSudoku
                 // if the string returns to anything less than 9, then there was some duplication
                 // and there is a violation of distinct letters in a row
                 // remove '_'
-                string tmpLine = "";
-                if (line.Contains("_"))
+                string tmpLine = line;
+                if (tmpLine.Contains("_"))
                 {
                     tmpLine = line.Replace("_", "");
                 }
@@ -669,12 +898,14 @@ namespace WordSudoku
             char[,] board = (char[,])tmpboard.Clone();
             // build a string consisting of all the letters in the cell
             string line = "";
+            int wordX = 0;
             if (direction.ToString().ToUpper().Equals("H"))
             {
                 // populate our board horizontally
-                for (int w = x; w < word.Length; w++)
+                for (int w = x; w < word.Length + x; w++)
                 {
-                    board[w, y] = word[w];
+                    board[w, y] = word[wordX];
+                    wordX++;
                 }
 
                 // check all variables impacted horizontally
@@ -711,8 +942,8 @@ namespace WordSudoku
                     // if the string returns to anything less than 9, then there was some duplication
                     // and there is a violation of distinct letters in a row               
                     // remove '_'
-                    string tmpLine = "";
-                    if (line.Contains("_"))
+                    string tmpLine = line;
+                    if (tmpLine.Contains("_"))
                     {
                         tmpLine = line.Replace("_", "");
                     }
@@ -769,8 +1000,8 @@ namespace WordSudoku
                     // if the string returns to anything less than 9, then there was some duplication
                     // and there is a violation of distinct letters in a row               
                     // remove '_'
-                    string tmpLine = "";
-                    if (line.Contains("_"))
+                    string tmpLine = line;
+                    if (tmpLine.Contains("_"))
                     {
                         tmpLine = line.Replace("_", "");
                     }
@@ -798,13 +1029,22 @@ namespace WordSudoku
 
             Console.WriteLine("Word Sudoku Board:");
 
-            for (int y = 8; y > 0; y--)
+            for (int y = 8; y >= 0; y--)
             {
                 for (int x = 0; x < 9; x++)
                 {
                     if (x == this._x && y == this._y) { Console.BackgroundColor = ConsoleColor.Green; }
+                    foreach (string hint in this._givenHints)
+                    {
+                        if (Int32.Parse(hint.Split('_')[0]) == x && Int32.Parse(hint.Split('_')[1]) == y)
+                        {
+                            Console.BackgroundColor = ConsoleColor.Yellow;
+                            Console.ForegroundColor = ConsoleColor.Black;
+                        }
+                    }
                     Console.Write(this._sudokuBoardData[x, y]);
                     Console.BackgroundColor = ConsoleColor.Black;
+                    Console.ForegroundColor = ConsoleColor.Gray;
                 }
                 Console.WriteLine();                
             }
