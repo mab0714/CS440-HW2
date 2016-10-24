@@ -4,3 +4,15 @@ I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\WordSudoku\WordSudoku\bin\Deb
 I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\WordSudoku\WordSudoku\obj\Debug\WordSudoku.exe
 I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\WordSudoku\WordSudoku\obj\Debug\WordSudoku.pdb
 I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\WordSudoku\WordSudoku\obj\Debug\WordSudoku.csprojResolveAssemblyReference.cache
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\bin\Debug\WordSudoku.exe.config
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\obj\Debug\WordSudoku.exe
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\obj\Debug\WordSudoku.pdb
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\bin\Debug\WordSudoku.exe
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\bin\Debug\WordSudoku.pdb
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\obj\Debug\WordSudoku.csprojResolveAssemblyReference.cache
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7 - Copy\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\bin\Debug\WordSudoku.exe.config
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7 - Copy\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\obj\Debug\WordSudoku.exe
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7 - Copy\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\obj\Debug\WordSudoku.pdb
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7 - Copy\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\bin\Debug\WordSudoku.exe
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7 - Copy\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\bin\Debug\WordSudoku.pdb
+I:\Backup\Masters\UIUC\2016\Fall\CS_440\Homework\2\CS440_HW2-WordSudoku_v2.7 - Copy\CS440_HW2-WordSudoku_v2.7\WordSudoku\WordSudoku\obj\Debug\WordSudoku.csprojResolveAssemblyReference.cache
